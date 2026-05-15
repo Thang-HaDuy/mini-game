@@ -5,7 +5,7 @@ using UnityEngine;
 public class WorldGenerator : MonoBehaviour
 {
 
-    public Vector3Int ChunkSize = new Vector3Int(16, 256, 16);
+    public static readonly Vector3Int ChunkSize = new Vector3Int(16, 256, 16);
     public Vector2 NoiseScale = Vector2.one;
     public Vector2 NoiseOffset = Vector2.zero;
     [Space]
@@ -44,6 +44,9 @@ public class WorldGenerator : MonoBehaviour
                 }
             }
         }
+
+        GameObject TempChunk = new GameObject("Chunk", new System.Type[] { typeof(MeshRenderer), typeof(MeshFilter) });
+        TempChunk.GetComponent<MeshFilter>().mesh = new ChunkMeshCreator().CreateMeshFromData(TempData);
     }
 
     private void OnDrawGizmos()
