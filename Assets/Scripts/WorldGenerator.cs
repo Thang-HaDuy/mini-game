@@ -6,25 +6,27 @@ public class WorldGenerator : MonoBehaviour
 {
 
     public static readonly Vector3Int ChunkSize = new Vector3Int(16, 256, 16);
+    [SerializeField] private TextureLoader TextureLoaderInstance;
+    [Space]
     public Vector2 NoiseScale = Vector2.one;
     public Vector2 NoiseOffset = Vector2.zero;
     [Space]
     public int HeightOffset = 60;
-    public float HeightIntensity = 5f; 
+    public float HeightIntensity = 5f;
     private int[,,] TempData;
     void Start()
     {
         TempData = new int[ChunkSize.x, ChunkSize.y, ChunkSize.z];
-        
-        for(int x = 0; x < ChunkSize.x; x++)
+
+        for (int x = 0; x < ChunkSize.x; x++)
         {
-            for(int z = 0; z < ChunkSize.z; z++)
+            for (int z = 0; z < ChunkSize.z; z++)
             {
                 float PerlinCoordX = NoiseOffset.x + x / (float)ChunkSize.x * NoiseScale.x;
                 float PerlinCoordY = NoiseOffset.y + z / (float)ChunkSize.z * NoiseScale.y;
                 int HeightGen = Mathf.RoundToInt(Mathf.PerlinNoise(PerlinCoordX, PerlinCoordY) * HeightIntensity + HeightOffset);
 
-                for(int y = HeightGen; y >= 0; y--)
+                for (int y = HeightGen; y >= 0; y--)
                 {
                     int BlockTypeToAssign = 0;
 
@@ -46,18 +48,18 @@ public class WorldGenerator : MonoBehaviour
         }
 
         GameObject TempChunk = new GameObject("Chunk", new System.Type[] { typeof(MeshRenderer), typeof(MeshFilter) });
-        TempChunk.GetComponent<MeshFilter>().mesh = new ChunkMeshCreator().CreateMeshFromData(TempData);
+        TempChunk.GetComponent<MeshFilter>().mesh = new ChunkMeshCreator(TextureLoaderInstance).CreateMeshFromData(TempData);
     }
 
     private void OnDrawGizmos()
     {
-        if(TempData != null)
+        if (TempData != null)
         {
-            for(int x = 0; x < ChunkSize.x; x++)
+            for (int x = 0; x < ChunkSize.x; x++)
             {
-                for(int y = 0; y < ChunkSize.y; y++)
+                for (int y = 0; y < ChunkSize.y; y++)
                 {
-                    for(int z = 0; z < ChunkSize.z; z++)
+                    for (int z = 0; z < ChunkSize.z; z++)
                     {
                         switch (TempData[x, y, z])
                         {
