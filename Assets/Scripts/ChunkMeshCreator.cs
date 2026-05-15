@@ -11,6 +11,7 @@ public class ChunkMeshCreator : MonoBehaviour
         {
             Vertices = verts;
             Indices = tris;
+            UVIndexOrders = uvIndexOrders;
 
         }
         public Vector3[] Vertices;
