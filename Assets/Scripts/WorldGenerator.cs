@@ -216,13 +216,38 @@ public class WorldGenerator : MonoBehaviour
             var coord = rebuildQueue.Dequeue();
             queuedSet.Remove(coord);
 
-            // chống rebuild trùng
-            if (!rebuilding.Add(coord))
-                continue;
+            ScheduleChunkRebuild(coord);
 
-            UpdateChunk(coord);
             count--;
         }
+    }
+
+    private void ScheduleChunkRebuild(Vector2Int coord)
+    {
+        if (!ActiveChunks.ContainsKey(coord))
+            return;
+
+        StartCoroutine(RebuildChunkRoutine(coord));
+    }
+
+    private IEnumerator RebuildChunkRoutine(Vector2Int chunkCoord)
+    {
+        ChunkData chunkData = worldStorage.GetChunk(chunkCoord);
+
+        if (chunkData == null)
+            yield break;
+
+        Mesh mesh = null;
+
+        yield return meshCreator.CreateMeshFromData(
+            chunkData.Blocks,
+            m => mesh = m
+        );
+
+        if (!ActiveChunks.TryGetValue(chunkCoord, out var chunkGO))
+            yield break;
+
+        chunkRenderer.Apply(chunkGO, mesh);
     }
 
     [System.Obsolete]
