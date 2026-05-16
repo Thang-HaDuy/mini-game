@@ -1,31 +1,13 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
 {
-    private ChunkStreamingSystem streamingSystem;
     [SerializeField] private Transform Player;
-
-    public ChunkPipeline ChunkPipeline { get; private set; }
-
-    private WorldState state;
-    private WorldStorage storage;
-    public WorldStorage Storage => storage;
-    private ChunkManager chunkManager;
-
-    public WorldState State => state;
-    public ChunkManager ChunkManager => chunkManager;
-
-    private ChunkRenderer chunkRenderer;
-    public ChunkRenderer ChunkRenderer => chunkRenderer;
-
-    public static readonly Vector3Int ChunkSize =
-        new Vector3Int(16, 256, 16);
 
     [SerializeField] private TextureLoader TextureLoaderInstance;
     [SerializeField] private Material ChunkMaterial;
 
+    public static readonly Vector3Int ChunkSize = new Vector3Int(16, 256, 16);
     [Space]
     public Vector2 NoiseScale = Vector2.one;
     public Vector2 NoiseOffset = Vector2.zero;
@@ -33,57 +15,57 @@ public class WorldGenerator : MonoBehaviour
     [Space]
     public int HeightOffset = 60;
     public float HeightIntensity = 5f;
-
-    private ChunkMeshCreator meshCreator;
-    public ChunkMeshCreator MeshCreator => meshCreator;
-    private DataGenerator dataCreator;
-    public DataGenerator DataCreator => dataCreator;
-
-    private int rebuildPerFrame = 1;
+    public WorldContext Context { get; private set; }
 
     void Start()
     {
-        streamingSystem = new ChunkStreamingSystem(this, 2); // RenderDistance hardcode tạm
+        Context = new WorldContext();
 
-        ChunkPipeline = new ChunkPipeline(this);
+        Context.Storage = new WorldStorage();
+        Context.State = new WorldState();
 
-        storage = new WorldStorage();
-        state = new WorldState();
+        Context.Renderer = new ChunkRenderer(ChunkMaterial);
 
-        meshCreator = new ChunkMeshCreator(TextureLoaderInstance, this);
-        dataCreator = new DataGenerator(this, GetComponent<StructureGenerator>());
+        Context.MeshCreator = new ChunkMeshCreator(TextureLoaderInstance, this);
+        Context.StructureGenerator = GetComponent<StructureGenerator>();
 
-        GetComponent<StructureGenerator>().Init(this);
+        Context.DataGenerator = new DataGenerator(this, Context.StructureGenerator);
 
-        chunkRenderer = new ChunkRenderer(ChunkMaterial);
+        Context.ChunkPipeline = new ChunkPipeline(this);
+        Context.ChunkManager = new ChunkManager(this);
+        Context.StreamingSystem = new ChunkStreamingSystem(this, 2);
 
-        chunkManager = new ChunkManager(this, rebuildPerFrame);
+        Context.StructureGenerator.Init(this);
+
+        Context.Config = new WorldConfig
+        {
+            NoiseOffset = NoiseOffset,
+            NoiseScale = NoiseScale,
+            HeightIntensity = HeightIntensity,
+            HeightOffset = HeightOffset
+        };
     }
 
-    public void SetBlock(Vector3Int worldPosition, int blockType = 0)
+    void LateUpdate()
     {
-        Vector2Int chunkCoords = ChunkCoordUtility.WorldToChunk(worldPosition);
-
-        if (!storage.HasChunk(chunkCoords))
-            return;
-
-        Vector3Int local = ChunkCoordUtility.WorldToLocal(worldPosition, chunkCoords);
-
-        var chunk = storage.GetChunk(chunkCoords);
-        if (chunk == null) return;
-
-        chunk.SetBlock(local.x, local.y, local.z, blockType);
-
-        if (!state.ActiveChunks.ContainsKey(chunkCoords))
-            return;
-
-        chunkManager.RequestRebuild(chunkCoords);
+        Context.StreamingSystem.Tick(Player.position);
+        Context.ChunkManager.ProcessQueue();
     }
 
-    private void LateUpdate()
+    public void SetBlock(Vector3Int worldPosition, int blockType)
     {
-        streamingSystem.Tick(Player.position);
+        var chunk = ChunkMath.WorldToChunk(worldPosition);
+        if (!Context.Storage.HasChunk(chunk)) return;
 
-        chunkManager.ProcessQueue();
+        var local = ChunkMath.WorldToLocal(worldPosition, chunk);
+        var data = Context.Storage.GetChunk(chunk);
+        if (data == null) return;
+
+        data.SetBlock(local.x, local.y, local.z, blockType);
+
+        if (!Context.State.ActiveChunks.ContainsKey(chunk))
+            return;
+
+        Context.ChunkManager.RequestRebuild(chunk);
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class ChunkStreamingSystem
 {
-    private readonly WorldGenerator world;
+    private WorldContext world;
     private readonly int renderDistance;
 
     private readonly HashSet<Vector2Int> loaded = new();
@@ -11,13 +11,13 @@ public class ChunkStreamingSystem
 
     public ChunkStreamingSystem(WorldGenerator world, int renderDistance)
     {
-        this.world = world;
+        this.world = world.Context;
         this.renderDistance = renderDistance;
     }
 
     public void Tick(Vector3 playerPos)
     {
-        Vector2Int center = ChunkCoordUtility.WorldToChunk(playerPos);
+        Vector2Int center = ChunkMath.WorldToChunk(playerPos);
 
         UpdateLoad(center);
         UpdateUnload(center);

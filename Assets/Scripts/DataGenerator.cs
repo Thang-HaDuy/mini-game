@@ -20,6 +20,7 @@ public class DataGenerator
     }
 
     private WorldGenerator GeneratorInstance;
+    private WorldContext world;
     private Queue<GenData> DataToGenerate;
     public bool Terminate;
 
@@ -27,6 +28,7 @@ public class DataGenerator
     public DataGenerator(WorldGenerator worldGen, StructureGenerator structureGen = null)
     {
         GeneratorInstance = worldGen;
+        world = worldGen.Context;
         DataToGenerate = new Queue<GenData>();
         this.structureGen = structureGen;
 
@@ -60,18 +62,18 @@ public class DataGenerator
             WorldGenerator.ChunkSize;
 
         Vector2 noiseOffset =
-            GeneratorInstance.NoiseOffset;
+            world.Config.NoiseOffset;
 
         Vector2 noiseScale =
-            GeneratorInstance.NoiseScale;
+            world.Config.NoiseScale;
 
         float heightIntensity =
-            GeneratorInstance.HeightIntensity;
+            world.Config.HeightIntensity;
 
         float heightOffset =
-            GeneratorInstance.HeightOffset;
+            world.Config.HeightOffset;
 
-        ChunkData chunkData = GeneratorInstance.Storage.GetChunk(offset);
+        ChunkData chunkData = world.Storage.GetChunk(offset);
 
         int[,,] tempData;
 
@@ -86,160 +88,58 @@ public class DataGenerator
         }
 
         Task t = Task.Factory.StartNew(() =>
+{
+    for (int x = 0; x < chunkSize.x; x++)
+    {
+        for (int z = 0; z < chunkSize.z; z++)
+        {
+            float perlinCoordX = noiseOffset.x + (x + (offset.x * 16f)) / chunkSize.x * noiseScale.x;
+            float perlinCoordY = noiseOffset.y + (z + (offset.y * 16f)) / chunkSize.z * noiseScale.y;
+
+            int heightGen = Mathf.RoundToInt(
+                Mathf.PerlinNoise(perlinCoordX, perlinCoordY) * heightIntensity + heightOffset
+            );
+
+            float biomeNoise = Mathf.PerlinNoise(perlinCoordX * 0.75f, perlinCoordY * 0.75f);
+
+            BiomeData data = biomeNoise < 0.5f
+                ? new BiomeData { topBlock = 4, topMiddleBlock = 2, bottomMiddleBlock = 3, bottomBlock = 4 }
+                : new BiomeData { topBlock = 3, topMiddleBlock = 2, bottomMiddleBlock = 3, bottomBlock = 1 };
+
+            for (int y = heightGen; y >= 0; y--)
+            {
+                int blockType = 0;
+
+                if (y == heightGen) blockType = data.topBlock;
+                else if (y > heightGen - 4) blockType = data.topMiddleBlock;
+                else if (y > 0) blockType = data.bottomMiddleBlock;
+                else blockType = data.bottomBlock;
+
+                if (tempData[x, y, z] == 0)
+                    tempData[x, y, z] = blockType;
+            }
+        }
+    }
+});
+
+        yield return new WaitUntil(() => t.IsCompleted);
+
+        if (t.Exception != null)
+            Debug.LogError(t.Exception);
+
+        // MAIN THREAD ONLY
+        world.Storage.AddChunk(chunkData);
+
+        if (structureGen != null)
         {
             for (int x = 0; x < chunkSize.x; x++)
             {
                 for (int z = 0; z < chunkSize.z; z++)
                 {
-                    float perlinCoordX =
-                        noiseOffset.x +
-                        (
-                            x +
-                            (offset.x * 16f)
-                        )
-                        / chunkSize.x
-                        * noiseScale.x;
-
-                    float perlinCoordY =
-                        noiseOffset.y +
-                        (
-                            z +
-                            (offset.y * 16f)
-                        )
-                        / chunkSize.z
-                        * noiseScale.y;
-
-                    int heightGen =
-                        Mathf.RoundToInt(
-                            Mathf.PerlinNoise(
-                                perlinCoordX,
-                                perlinCoordY
-                            )
-                            * heightIntensity
-                            + heightOffset
-                        );
-
-                    float biomeCoordX =
-                        noiseOffset.x +
-                        (
-                            x +
-                            (offset.x * 16f)
-                        )
-                        / chunkSize.x
-                        * 0.75f;
-
-                    float biomeCoordY =
-                        noiseOffset.y +
-                        (
-                            z +
-                            (offset.y * 16f)
-                        )
-                        / chunkSize.z
-                        * 0.75f;
-
-                    float biomeNoise =
-                        Mathf.PerlinNoise(
-                            biomeCoordX,
-                            biomeCoordY
-                        );
-
-                    BiomeData data;
-
-                    if (biomeNoise < 0.5f)
-                    {
-                        data = new BiomeData
-                        {
-                            topBlock = 4,
-                            topMiddleBlock = 2,
-                            bottomMiddleBlock = 3,
-                            bottomBlock = 4
-                        };
-                    }
-                    else
-                    {
-                        data = new BiomeData
-                        {
-                            topBlock = 3,
-                            topMiddleBlock = 2,
-                            bottomMiddleBlock = 3,
-                            bottomBlock = 1
-                        };
-                    }
-
-                    for (
-                        int y = heightGen;
-                        y >= 0;
-                        y--
-                    )
-                    {
-                        int blockTypeToAssign = 0;
-
-                        if (y == heightGen)
-                            blockTypeToAssign =
-                                data.topBlock;
-
-                        if (
-                            y < heightGen &&
-                            y > heightGen - 4
-                        )
-                        {
-                            blockTypeToAssign =
-                                data.topMiddleBlock;
-                        }
-
-                        if (
-                            y <= heightGen - 4 &&
-                            y > 0
-                        )
-                        {
-                            blockTypeToAssign =
-                                data.bottomMiddleBlock;
-                        }
-
-                        if (y == 0)
-                        {
-                            blockTypeToAssign =
-                                data.bottomBlock;
-                        }
-
-                        if (
-                            tempData[x, y, z] == 0
-                        )
-                        {
-                            tempData[x, y, z] =
-                                blockTypeToAssign;
-                        }
-                    }
-
-                    if (
-                        structureGen != null &&
-                        data.topBlock == 4
-                    )
-                    {
-                        structureGen.GenerateStructure(
-                            offset,
-                            ref tempData,
-                            x,
-                            z
-                        );
-                    }
+                    structureGen.GenerateStructure(offset, ref chunkData.Blocks, x, z);
                 }
             }
-        });
-
-        yield return new WaitUntil(() =>
-        {
-            return t.IsCompleted || t.IsCanceled;
-        });
-
-        if (t.Exception != null)
-        {
-            Debug.LogError(t.Exception);
         }
-
-        GeneratorInstance.Storage.AddChunk(
-            chunkData
-        );
 
         callback(chunkData);
     }

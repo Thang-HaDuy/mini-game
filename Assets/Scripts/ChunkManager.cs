@@ -1,19 +1,21 @@
+// FILE: ChunkManager.cs (AFTER FIX)
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class ChunkManager
 {
-    private readonly WorldGenerator world;
+    private readonly WorldGenerator worldGen;
+    private readonly WorldContext world;
 
     private readonly Queue<Vector2Int> rebuildQueue = new();
     private readonly HashSet<Vector2Int> queuedSet = new();
-
     private readonly int rebuildPerFrame;
 
-    public ChunkManager(WorldGenerator world, int rebuildPerFrame = 1)
+    public ChunkManager(WorldGenerator worldGen, int rebuildPerFrame = 1)
     {
-        this.world = world;
+        this.worldGen = worldGen;
+        this.world = worldGen.Context;
         this.rebuildPerFrame = rebuildPerFrame;
     }
 
@@ -22,7 +24,7 @@ public class ChunkManager
         if (world.State.ActiveChunks.ContainsKey(coord))
             return;
 
-        world.StartCoroutine(world.ChunkPipeline.BuildChunk(coord));
+        worldGen.StartCoroutine(world.ChunkPipeline.BuildChunk(coord));
     }
 
     public void RequestRebuild(Vector2Int coord)
@@ -40,7 +42,7 @@ public class ChunkManager
             var coord = rebuildQueue.Dequeue();
             queuedSet.Remove(coord);
 
-            world.StartCoroutine(RebuildChunkRoutine(coord));
+            worldGen.StartCoroutine(RebuildChunkRoutine(coord));
             count--;
         }
     }
@@ -64,7 +66,7 @@ public class ChunkManager
         if (!world.State.ActiveChunks.TryGetValue(chunkCoord, out var chunkGO))
             yield break;
 
-        world.ChunkRenderer.Apply(chunkGO, mesh);
+        world.Renderer.Apply(chunkGO, mesh);
     }
 
     public void RebuildImmediate(Vector2Int coord)

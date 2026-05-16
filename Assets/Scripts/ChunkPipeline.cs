@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class ChunkPipeline
 {
-    private readonly WorldGenerator world;
+    private WorldContext world;
     private readonly Queue<Vector2Int> queue = new();
     private bool isRunning;
 
     public ChunkPipeline(WorldGenerator world)
     {
-        this.world = world;
+        this.world = world.Context;
     }
 
     public IEnumerator BuildChunk(Vector2Int coord)
@@ -19,7 +19,7 @@ public class ChunkPipeline
 
         if (data == null)
         {
-            yield return world.DataCreator.GenerateData(coord, d => data = d);
+            yield return world.DataGenerator.GenerateData(coord, d => data = d);
 
             if (data == null)
                 yield break;
@@ -36,7 +36,7 @@ public class ChunkPipeline
         Mesh mesh = null;
         yield return world.MeshCreator.CreateMeshFromData(data.Blocks, m => mesh = m);
 
-        world.ChunkRenderer.Apply(go, mesh);
+        world.Renderer.Apply(go, mesh);
     }
 
     private GameObject CreateChunkObject(Vector2Int coord)
