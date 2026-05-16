@@ -10,6 +10,10 @@ public class WorldGenerator : MonoBehaviour
 
     private ChunkRenderer chunkRenderer;
 
+    private Queue<Vector2Int> rebuildQueue = new();
+    private HashSet<Vector2Int> queuedSet = new();
+    private HashSet<Vector2Int> rebuilding = new();
+
     public static Dictionary<Vector2Int, GameObject> ActiveChunks;
     public static Dictionary<Vector2Int, int[,,]> AdditiveWorldData;
 
@@ -29,6 +33,8 @@ public class WorldGenerator : MonoBehaviour
 
     private ChunkMeshCreator meshCreator;
     private DataGenerator dataCreator;
+
+    private int rebuildPerFrame = 1;
 
     void Start()
     {
@@ -153,6 +159,7 @@ public class WorldGenerator : MonoBehaviour
                 mesh =>
                 {
                     chunkRenderer.Apply(targetChunk, mesh);
+                    rebuilding.Remove(chunkCoord);
                 }
             )
         );
@@ -181,24 +188,40 @@ public class WorldGenerator : MonoBehaviour
             localCoords.z,
             blockType
         );
-
-        UpdateChunk(chunkCoords);
         ChunkDirtyTracker.MarkDirty(chunkCoords);
     }
 
     private void LateUpdate()
     {
         ProcessDirtyChunks();
+        ProcessRebuildQueue();
     }
 
     private void ProcessDirtyChunks()
     {
-        if (!ChunkDirtyTracker.HasDirty)
-            return;
-
-        if (ChunkDirtyTracker.TryConsume(out var coord))
+        while (ChunkDirtyTracker.TryConsume(out var coord))
         {
+            if (queuedSet.Add(coord))
+            {
+                rebuildQueue.Enqueue(coord);
+            }   
+        }
+    }
+    private void ProcessRebuildQueue()
+    {
+        int count = rebuildPerFrame;
+
+        while (count > 0 && rebuildQueue.Count > 0)
+        {
+            var coord = rebuildQueue.Dequeue();
+            queuedSet.Remove(coord);
+
+            // chống rebuild trùng
+            if (!rebuilding.Add(coord))
+                continue;
+
             UpdateChunk(coord);
+            count--;
         }
     }
 
