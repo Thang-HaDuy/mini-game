@@ -8,6 +8,8 @@ public class WorldGenerator : MonoBehaviour
 
     public WorldStorage WorldStorage => worldStorage;
 
+    private ChunkRenderer chunkRenderer;
+
     public static Dictionary<Vector2Int, GameObject> ActiveChunks;
     public static Dictionary<Vector2Int, int[,,]> AdditiveWorldData;
 
@@ -51,6 +53,7 @@ public class WorldGenerator : MonoBehaviour
             );
 
         GetComponent<StructureGenerator>().Init(this);
+        chunkRenderer = new ChunkRenderer(ChunkMaterial);
     }
 
     public IEnumerator CreateChunk(Vector2Int chunkCoord)
@@ -120,20 +123,7 @@ public class WorldGenerator : MonoBehaviour
 
         if (newChunk != null)
         {
-            MeshRenderer renderer =
-                newChunk.GetComponent<MeshRenderer>();
-
-            MeshFilter filter =
-                newChunk.GetComponent<MeshFilter>();
-
-            MeshCollider collider =
-                newChunk.GetComponent<MeshCollider>();
-
-            filter.mesh = meshToUse;
-
-            renderer.material = ChunkMaterial;
-
-            collider.sharedMesh = meshToUse;
+            chunkRenderer.Apply(newChunk, meshToUse);
         }
     }
 
@@ -162,8 +152,7 @@ public class WorldGenerator : MonoBehaviour
                 chunkData.Blocks,
                 mesh =>
                 {
-                    filter.mesh = mesh;
-                    collider.sharedMesh = mesh;
+                    chunkRenderer.Apply(targetChunk, mesh);
                 }
             )
         );
