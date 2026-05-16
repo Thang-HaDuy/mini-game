@@ -10,6 +10,8 @@ public class StructureGenerator : MonoBehaviour
         public int typeToAssign;
     };
 
+    private WorldGenerator world;
+
     [SerializeField] private StructureBlockInfo[] StructureInfo;
 
     [Range(0f, 1f)]
@@ -18,6 +20,11 @@ public class StructureGenerator : MonoBehaviour
 
     private void Awake() {
         randomGen = new System.Random(1337);
+    }
+
+    public void Init(WorldGenerator worldGenerator)
+    {
+        world = worldGenerator;
     }
 
     private void applyStructure(ref int[,,] dataToModify, Vector2Int originCoords, int x, int y, int z) {
@@ -38,8 +45,8 @@ public class StructureGenerator : MonoBehaviour
                 int worldZ = p.z + (originCoords.y * 16);
                 Vector3Int pos = new Vector3Int(worldX, worldY, worldZ);
 
-                Vector2Int newCoords = WorldGenerator.GetChunkCoordsFromPosition(pos);
-                Vector3Int chunkCoords = WorldGenerator.WorldToLocalCoords(pos, newCoords);
+                Vector2Int newCoords = world.GetChunkCoordsFromPosition(pos);
+                Vector3Int chunkCoords = world.WorldToLocalCoords(pos, newCoords);
 
                 if (WorldGenerator.AdditiveWorldData.ContainsKey(newCoords)) {
                     WorldGenerator.AdditiveWorldData[newCoords][chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;
