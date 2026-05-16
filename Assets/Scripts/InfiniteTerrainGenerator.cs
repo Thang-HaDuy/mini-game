@@ -36,8 +36,11 @@ public class InfiniteTerrainGenerator : MonoBehaviour
                 Vector2Int chunkCoord = new Vector2Int(x, y);
                 if (!GeneratorInstance.State.ActiveChunks.ContainsKey(chunkCoord))
                 {
-                    // GeneratorInstance.EnqueueChunkToCreate(chunkCoord);
-                    StartCoroutine(GeneratorInstance.CreateChunk(chunkCoord));
+                    GeneratorInstance.ChunkManager.RequestChunk(chunkCoord);
+                }
+                else
+                {
+                    GeneratorInstance.ChunkManager.RequestRebuild(chunkCoord); // update mesh
                 }
 
                 CoordsToRemove.Remove(chunkCoord);

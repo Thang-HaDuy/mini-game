@@ -4,16 +4,17 @@ using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
 {
-    private WorldStorage worldStorage;
-    public WorldStorage WorldStorage => worldStorage;
-
     private WorldState state;
+    private WorldStorage storage;
+    private ChunkManager chunkManager;
+
     public WorldState State => state;
+    public WorldStorage Storage => storage;
+    public ChunkManager ChunkManager => chunkManager;
 
     private ChunkRenderer chunkRenderer;
     public ChunkRenderer ChunkRenderer => chunkRenderer;
 
-    public ChunkManager chunkManager;
 
     public static readonly Vector3Int ChunkSize =
         new Vector3Int(16, 256, 16);
@@ -37,23 +38,14 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
-        worldStorage = new WorldStorage();
+        storage = new WorldStorage();
         state = new WorldState();
 
-
-        meshCreator =
-            new ChunkMeshCreator(
-                TextureLoaderInstance,
-                this
-            );
-
-        dataCreator =
-            new DataGenerator(
-                this,
-                GetComponent<StructureGenerator>()
-            );
+        meshCreator = new ChunkMeshCreator(TextureLoaderInstance, this);
+        dataCreator = new DataGenerator(this, GetComponent<StructureGenerator>());
 
         GetComponent<StructureGenerator>().Init(this);
+
         chunkRenderer = new ChunkRenderer(ChunkMaterial);
 
         chunkManager = new ChunkManager(this, rebuildPerFrame);
@@ -61,91 +53,75 @@ public class WorldGenerator : MonoBehaviour
 
     public IEnumerator CreateChunk(Vector2Int chunkCoord)
     {
-        string chunkName =
-            $"Chunk {chunkCoord.x} {chunkCoord.y}";
+        if (state.ActiveChunks.ContainsKey(chunkCoord))
+            yield break;
+        string chunkName = $"Chunk{chunkCoord.x}{chunkCoord.y}";
 
         GameObject newChunk =
-            new GameObject(
-                chunkName,
-                new System.Type[]
-                {
-                    typeof(MeshRenderer),
-                    typeof(MeshFilter),
-                    typeof(MeshCollider)
-                }
-            );
+            new GameObject(chunkName, new System.Type[]
+            {
+                typeof(MeshRenderer),
+                typeof(MeshFilter),
+                typeof(MeshCollider)
+            });
 
         newChunk.transform.position =
-            new Vector3(
-                chunkCoord.x * ChunkSize.x,
-                0f,
-                chunkCoord.y * ChunkSize.z
-            );
+            new Vector3(chunkCoord.x * ChunkSize.x, 0f, chunkCoord.y * ChunkSize.z);
 
         state.ActiveChunks.Add(chunkCoord, newChunk);
 
-        ChunkData dataToApply =
-            worldStorage.GetChunk(chunkCoord);
-
-        Mesh meshToUse = null;
+        // 1. get data
+        ChunkData dataToApply = storage.GetChunk(chunkCoord);
 
         if (dataToApply == null)
         {
-            dataCreator.QueueDataToGenerate(
-                new DataGenerator.GenData
-                {
-                    GenerationPoint = chunkCoord,
+            bool done = false;
 
-                    OnComplete = chunkData =>
-                    {
-                        dataToApply = chunkData;
-                    }
-                }
-            );
-
-            yield return new WaitUntil(
-                () => dataToApply != null
-            );
-        }
-
-        meshCreator.QueueDataToDraw(
-            new ChunkMeshCreator.CreateMesh
+            dataCreator.QueueDataToGenerate(new DataGenerator.GenData
             {
-                DataToDraw = dataToApply.Blocks,
-
-                OnComplete = mesh =>
+                GenerationPoint = chunkCoord,
+                OnComplete = c =>
                 {
-                    meshToUse = mesh;
+                    dataToApply = c;
+                    done = true;
                 }
-            }
-        );
+            });
 
-        yield return new WaitUntil(
-            () => meshToUse != null
-        );
-
-        if (newChunk != null)
-        {
-            chunkRenderer.Apply(newChunk, meshToUse);
+            yield return new WaitUntil(() => done);
         }
-    }
 
+        // 2. mesh
+        Mesh mesh = null;
+
+        meshCreator.QueueDataToDraw(new ChunkMeshCreator.CreateMesh
+        {
+            DataToDraw = dataToApply.Blocks,
+            OnComplete = m => mesh = m
+        });
+
+        yield return new WaitUntil(() => mesh != null);
+
+        // 3. apply
+        chunkRenderer.Apply(newChunk, mesh);
+    }
     public void SetBlock(Vector3Int worldPosition, int blockType = 0)
     {
-        Vector2Int chunkCoords =
-            ChunkCoordUtility.WorldToChunk(worldPosition);
+        Vector2Int chunkCoords = ChunkCoordUtility.WorldToChunk(worldPosition);
 
-        if (!worldStorage.HasChunk(chunkCoords))
+        if (!storage.HasChunk(chunkCoords))
             return;
 
-        Vector3Int localCoords =
-            ChunkCoordUtility.WorldToLocal(worldPosition, chunkCoords);
+        Vector3Int local = ChunkCoordUtility.WorldToLocal(worldPosition, chunkCoords);
 
-        var chunk = worldStorage.GetChunk(chunkCoords);
+        var chunk = storage.GetChunk(chunkCoords);
+        if (chunk == null) return;
 
-        chunk.SetBlock(localCoords.x, localCoords.y, localCoords.z, blockType);
+        chunk.SetBlock(local.x, local.y, local.z, blockType);
 
-        ChunkDirtyTracker.MarkDirty(chunkCoords);
+        if (!state.ActiveChunks.ContainsKey(chunkCoords))
+            return;
+
+        chunkManager.RequestRebuild(chunkCoords);
     }
 
     private void LateUpdate()
@@ -158,7 +134,7 @@ public class WorldGenerator : MonoBehaviour
     {
         while (ChunkDirtyTracker.TryConsume(out var coord))
         {
-            chunkManager.EnqueueRebuild(coord);
+            chunkManager.RequestRebuild(coord);
         }
     }
 

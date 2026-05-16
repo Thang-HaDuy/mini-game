@@ -71,29 +71,20 @@ public class DataGenerator
         float heightOffset =
             GeneratorInstance.HeightOffset;
 
-        ChunkData chunkData =
-            new ChunkData(offset);
+        ChunkData chunkData = GeneratorInstance.Storage.GetChunk(offset);
 
-        int[,,] tempData =
-            chunkData.Blocks;
+        int[,,] tempData;
 
-        // Apply additive data
-        if (
-            GeneratorInstance.State.AdditiveWorldData.TryGetValue(
-                offset,
-                out int[,,] addedData
-            )
-        )
+        if (chunkData != null)
         {
-            tempData = addedData;
-
-            chunkData.Blocks = tempData;
-
-            GeneratorInstance.State.AdditiveWorldData.Remove(
-                offset
-            );
+            tempData = chunkData.Blocks;
         }
-
+        else
+        {
+            chunkData = new ChunkData(offset);
+            tempData = chunkData.Blocks;
+        }
+ 
         Task t = Task.Factory.StartNew(() =>
         {
             for (int x = 0; x < chunkSize.x; x++)
@@ -246,7 +237,7 @@ public class DataGenerator
             Debug.LogError(t.Exception);
         }
 
-        GeneratorInstance.WorldStorage.AddChunk(
+        GeneratorInstance.Storage.AddChunk(
             chunkData
         );
 

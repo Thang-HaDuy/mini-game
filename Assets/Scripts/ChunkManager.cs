@@ -17,7 +17,15 @@ public class ChunkManager
         this.rebuildPerFrame = rebuildPerFrame;
     }
 
-    public void EnqueueRebuild(Vector2Int coord)
+    public void RequestChunk(Vector2Int coord)
+    {
+        if (world.State.ActiveChunks.ContainsKey(coord))
+            return;
+
+        world.StartCoroutine(world.CreateChunk(coord));
+    }
+
+    public void RequestRebuild(Vector2Int coord)
     {
         if (queuedSet.Add(coord))
             rebuildQueue.Enqueue(coord);
@@ -42,7 +50,7 @@ public class ChunkManager
         if (!world.State.ActiveChunks.ContainsKey(chunkCoord))
             yield break;
 
-        var chunkData = world.WorldStorage.GetChunk(chunkCoord);
+        var chunkData = world.Storage.GetChunk(chunkCoord);
         if (chunkData == null)
             yield break;
 
@@ -61,7 +69,7 @@ public class ChunkManager
 
     public void RebuildImmediate(Vector2Int coord)
     {
-        EnqueueRebuild(coord);
+        RequestRebuild(coord);
     }
 
     public void Clear()
