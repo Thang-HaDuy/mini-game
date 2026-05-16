@@ -45,8 +45,8 @@ public class StructureGenerator : MonoBehaviour
                 int worldZ = p.z + (originCoords.y * 16);
                 Vector3Int pos = new Vector3Int(worldX, worldY, worldZ);
 
-                Vector2Int newCoords = world.GetChunkCoordsFromPosition(pos);
-                Vector3Int chunkCoords = world.WorldToLocalCoords(pos, newCoords);
+                Vector2Int newCoords = ChunkCoordUtility.WorldToChunk(pos);
+                Vector3Int chunkCoords = ChunkCoordUtility.WorldToLocal(pos, newCoords);
 
                 if (WorldGenerator.AdditiveWorldData.ContainsKey(newCoords)) {
                     WorldGenerator.AdditiveWorldData[newCoords][chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;

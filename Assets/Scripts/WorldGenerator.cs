@@ -250,38 +250,4 @@ public class WorldGenerator : MonoBehaviour
         chunkRenderer.Apply(chunkGO, mesh);
     }
 
-    [System.Obsolete]
-    public Vector2Int GetChunkCoordsFromPosition(
-            Vector3 worldPosition
-        )
-    {
-        return new Vector2Int(
-            Mathf.FloorToInt(
-                worldPosition.x / ChunkSize.x
-            ),
-
-            Mathf.FloorToInt(
-                worldPosition.z / ChunkSize.z
-            )
-        );
-    }
-
-    [System.Obsolete]
-    public Vector3Int WorldToLocalCoords(
-            Vector3Int worldPosition,
-            Vector2Int chunkCoords
-        )
-    {
-        return new Vector3Int(
-            worldPosition.x -
-            (chunkCoords.x * ChunkSize.x),
-
-            worldPosition.y,
-
-            worldPosition.z -
-            (chunkCoords.y * ChunkSize.z)
-        );
-    }
-
-
 }
