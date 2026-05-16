@@ -11,13 +11,9 @@ public class WorldGenerator : MonoBehaviour
     public WorldState State => state;
 
     private ChunkRenderer chunkRenderer;
+    public ChunkRenderer ChunkRenderer => chunkRenderer;
 
-    private Queue<Vector2Int> rebuildQueue = new();
-    private HashSet<Vector2Int> queuedSet = new();
-    private HashSet<Vector2Int> rebuilding = new();
-
-    // public static Dictionary<Vector2Int, GameObject> ActiveChunks;
-    // public static Dictionary<Vector2Int, int[,,]> AdditiveWorldData;
+    public ChunkManager chunkManager;
 
     public static readonly Vector3Int ChunkSize =
         new Vector3Int(16, 256, 16);
@@ -34,6 +30,7 @@ public class WorldGenerator : MonoBehaviour
     public float HeightIntensity = 5f;
 
     private ChunkMeshCreator meshCreator;
+    public ChunkMeshCreator MeshCreator => meshCreator;
     private DataGenerator dataCreator;
 
     private int rebuildPerFrame = 1;
@@ -41,12 +38,8 @@ public class WorldGenerator : MonoBehaviour
     void Start()
     {
         worldStorage = new WorldStorage();
+        state = new WorldState();
 
-        // ActiveChunks =
-        //     new Dictionary<Vector2Int, GameObject>();
-
-        // AdditiveWorldData =
-        //     new Dictionary<Vector2Int, int[,,]>();
 
         meshCreator =
             new ChunkMeshCreator(
@@ -63,7 +56,7 @@ public class WorldGenerator : MonoBehaviour
         GetComponent<StructureGenerator>().Init(this);
         chunkRenderer = new ChunkRenderer(ChunkMaterial);
 
-        state = new WorldState();
+        chunkManager = new ChunkManager(this, rebuildPerFrame);
     }
 
     public IEnumerator CreateChunk(Vector2Int chunkCoord)
@@ -137,42 +130,7 @@ public class WorldGenerator : MonoBehaviour
         }
     }
 
-    public void UpdateChunk(Vector2Int chunkCoord)
-    {
-        if (!state.ActiveChunks.ContainsKey(chunkCoord))
-            return;
-
-        ChunkData chunkData =
-            worldStorage.GetChunk(chunkCoord);
-
-        if (chunkData == null)
-            return;
-
-        GameObject targetChunk =
-            state.ActiveChunks[chunkCoord];
-
-        MeshFilter filter =
-            targetChunk.GetComponent<MeshFilter>();
-
-        MeshCollider collider =
-            targetChunk.GetComponent<MeshCollider>();
-
-        StartCoroutine(
-            meshCreator.CreateMeshFromData(
-                chunkData.Blocks,
-                mesh =>
-                {
-                    chunkRenderer.Apply(targetChunk, mesh);
-                    rebuilding.Remove(chunkCoord);
-                }
-            )
-        );
-    }
-
-    public void SetBlock(
-        Vector3Int worldPosition,
-        int blockType = 0
-    )
+    public void SetBlock(Vector3Int worldPosition, int blockType = 0)
     {
         Vector2Int chunkCoords =
             ChunkCoordUtility.WorldToChunk(worldPosition);
@@ -183,75 +141,25 @@ public class WorldGenerator : MonoBehaviour
         Vector3Int localCoords =
             ChunkCoordUtility.WorldToLocal(worldPosition, chunkCoords);
 
-        ChunkData chunk =
-            worldStorage.GetChunk(chunkCoords);
+        var chunk = worldStorage.GetChunk(chunkCoords);
 
-        chunk.SetBlock(
-            localCoords.x,
-            localCoords.y,
-            localCoords.z,
-            blockType
-        );
+        chunk.SetBlock(localCoords.x, localCoords.y, localCoords.z, blockType);
+
         ChunkDirtyTracker.MarkDirty(chunkCoords);
     }
 
     private void LateUpdate()
     {
         ProcessDirtyChunks();
-        ProcessRebuildQueue();
+        chunkManager.ProcessQueue();
     }
 
     private void ProcessDirtyChunks()
     {
         while (ChunkDirtyTracker.TryConsume(out var coord))
         {
-            if (queuedSet.Add(coord))
-            {
-                rebuildQueue.Enqueue(coord);
-            }   
+            chunkManager.EnqueueRebuild(coord);
         }
-    }
-    private void ProcessRebuildQueue()
-    {
-        int count = rebuildPerFrame;
-
-        while (count > 0 && rebuildQueue.Count > 0)
-        {
-            var coord = rebuildQueue.Dequeue();
-            queuedSet.Remove(coord);
-
-            ScheduleChunkRebuild(coord);
-
-            count--;
-        }
-    }
-
-    private void ScheduleChunkRebuild(Vector2Int coord)
-    {
-        if (!state.ActiveChunks.ContainsKey(coord))
-            return;
-
-        StartCoroutine(RebuildChunkRoutine(coord));
-    }
-
-    private IEnumerator RebuildChunkRoutine(Vector2Int chunkCoord)
-    {
-        ChunkData chunkData = worldStorage.GetChunk(chunkCoord);
-
-        if (chunkData == null)
-            yield break;
-
-        Mesh mesh = null;
-
-        yield return meshCreator.CreateMeshFromData(
-            chunkData.Blocks,
-            m => mesh = m
-        );
-
-        if (!state.ActiveChunks.TryGetValue(chunkCoord, out var chunkGO))
-            yield break;
-
-        chunkRenderer.Apply(chunkGO, mesh);
     }
 
 }
