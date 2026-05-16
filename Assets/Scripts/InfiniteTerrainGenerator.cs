@@ -24,7 +24,7 @@ public class InfiniteTerrainGenerator : MonoBehaviour
         int plrChunkY = (int)Player.position.z / WorldGenerator.ChunkSize.z;
         CoordsToRemove.Clear();
 
-        foreach (KeyValuePair<Vector2Int, GameObject> activeChunk in WorldGenerator.ActiveChunks)
+        foreach (KeyValuePair<Vector2Int, GameObject> activeChunk in GeneratorInstance.State.ActiveChunks)
         {
             CoordsToRemove.Add(activeChunk.Key);
         }
@@ -34,7 +34,7 @@ public class InfiniteTerrainGenerator : MonoBehaviour
             for (int y = plrChunkY - RenderDistance; y <= plrChunkY + RenderDistance; y++)
             {
                 Vector2Int chunkCoord = new Vector2Int(x, y);
-                if (!WorldGenerator.ActiveChunks.ContainsKey(chunkCoord))
+                if (!GeneratorInstance.State.ActiveChunks.ContainsKey(chunkCoord))
                 {
                     // GeneratorInstance.EnqueueChunkToCreate(chunkCoord);
                     StartCoroutine(GeneratorInstance.CreateChunk(chunkCoord));
@@ -46,8 +46,8 @@ public class InfiniteTerrainGenerator : MonoBehaviour
 
         foreach (Vector2Int coord in CoordsToRemove)
         {
-            GameObject chunkToDelete = WorldGenerator.ActiveChunks[coord];
-            WorldGenerator.ActiveChunks.Remove(coord);
+            GameObject chunkToDelete = GeneratorInstance.State.ActiveChunks[coord];
+            GeneratorInstance.State.ActiveChunks.Remove(coord);
             Destroy(chunkToDelete);
         }
     }

@@ -5,8 +5,10 @@ using UnityEngine;
 public class WorldGenerator : MonoBehaviour
 {
     private WorldStorage worldStorage;
-
     public WorldStorage WorldStorage => worldStorage;
+
+    private WorldState state;
+    public WorldState State => state;
 
     private ChunkRenderer chunkRenderer;
 
@@ -14,8 +16,8 @@ public class WorldGenerator : MonoBehaviour
     private HashSet<Vector2Int> queuedSet = new();
     private HashSet<Vector2Int> rebuilding = new();
 
-    public static Dictionary<Vector2Int, GameObject> ActiveChunks;
-    public static Dictionary<Vector2Int, int[,,]> AdditiveWorldData;
+    // public static Dictionary<Vector2Int, GameObject> ActiveChunks;
+    // public static Dictionary<Vector2Int, int[,,]> AdditiveWorldData;
 
     public static readonly Vector3Int ChunkSize =
         new Vector3Int(16, 256, 16);
@@ -40,11 +42,11 @@ public class WorldGenerator : MonoBehaviour
     {
         worldStorage = new WorldStorage();
 
-        ActiveChunks =
-            new Dictionary<Vector2Int, GameObject>();
+        // ActiveChunks =
+        //     new Dictionary<Vector2Int, GameObject>();
 
-        AdditiveWorldData =
-            new Dictionary<Vector2Int, int[,,]>();
+        // AdditiveWorldData =
+        //     new Dictionary<Vector2Int, int[,,]>();
 
         meshCreator =
             new ChunkMeshCreator(
@@ -60,6 +62,8 @@ public class WorldGenerator : MonoBehaviour
 
         GetComponent<StructureGenerator>().Init(this);
         chunkRenderer = new ChunkRenderer(ChunkMaterial);
+
+        state = new WorldState();
     }
 
     public IEnumerator CreateChunk(Vector2Int chunkCoord)
@@ -85,7 +89,7 @@ public class WorldGenerator : MonoBehaviour
                 chunkCoord.y * ChunkSize.z
             );
 
-        ActiveChunks.Add(chunkCoord, newChunk);
+        state.ActiveChunks.Add(chunkCoord, newChunk);
 
         ChunkData dataToApply =
             worldStorage.GetChunk(chunkCoord);
@@ -135,7 +139,7 @@ public class WorldGenerator : MonoBehaviour
 
     public void UpdateChunk(Vector2Int chunkCoord)
     {
-        if (!ActiveChunks.ContainsKey(chunkCoord))
+        if (!state.ActiveChunks.ContainsKey(chunkCoord))
             return;
 
         ChunkData chunkData =
@@ -145,7 +149,7 @@ public class WorldGenerator : MonoBehaviour
             return;
 
         GameObject targetChunk =
-            ActiveChunks[chunkCoord];
+            state.ActiveChunks[chunkCoord];
 
         MeshFilter filter =
             targetChunk.GetComponent<MeshFilter>();
@@ -224,7 +228,7 @@ public class WorldGenerator : MonoBehaviour
 
     private void ScheduleChunkRebuild(Vector2Int coord)
     {
-        if (!ActiveChunks.ContainsKey(coord))
+        if (!state.ActiveChunks.ContainsKey(coord))
             return;
 
         StartCoroutine(RebuildChunkRoutine(coord));
@@ -244,7 +248,7 @@ public class WorldGenerator : MonoBehaviour
             m => mesh = m
         );
 
-        if (!ActiveChunks.TryGetValue(chunkCoord, out var chunkGO))
+        if (!state.ActiveChunks.TryGetValue(chunkCoord, out var chunkGO))
             yield break;
 
         chunkRenderer.Apply(chunkGO, mesh);

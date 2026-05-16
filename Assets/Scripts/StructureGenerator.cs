@@ -48,13 +48,13 @@ public class StructureGenerator : MonoBehaviour
                 Vector2Int newCoords = ChunkCoordUtility.WorldToChunk(pos);
                 Vector3Int chunkCoords = ChunkCoordUtility.WorldToLocal(pos, newCoords);
 
-                if (WorldGenerator.AdditiveWorldData.ContainsKey(newCoords)) {
-                    WorldGenerator.AdditiveWorldData[newCoords][chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;
+                if (world.State.AdditiveWorldData.ContainsKey(newCoords)) {
+                    world.State.AdditiveWorldData[newCoords][chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;
                 }
                 else {
                     int[,,] emptyData = new int[WorldGenerator.ChunkSize.x, WorldGenerator.ChunkSize.y, WorldGenerator.ChunkSize.z];
                     emptyData[chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;
-                    WorldGenerator.AdditiveWorldData.Add(newCoords, emptyData);
+                    world.State.AdditiveWorldData.Add(newCoords, emptyData);
                 }
             }
         }

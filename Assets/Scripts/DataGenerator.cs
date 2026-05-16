@@ -79,7 +79,7 @@ public class DataGenerator
 
         // Apply additive data
         if (
-            WorldGenerator.AdditiveWorldData.TryGetValue(
+            GeneratorInstance.State.AdditiveWorldData.TryGetValue(
                 offset,
                 out int[,,] addedData
             )
@@ -89,7 +89,7 @@ public class DataGenerator
 
             chunkData.Blocks = tempData;
 
-            WorldGenerator.AdditiveWorldData.Remove(
+            GeneratorInstance.State.AdditiveWorldData.Remove(
                 offset
             );
         }
