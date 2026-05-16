@@ -15,44 +15,76 @@ public class ChunkFactory
         if (world.State.ActiveChunks.ContainsKey(chunkCoord))
             yield break;
 
-        string chunkName = $"Chunk{chunkCoord.x}{chunkCoord.y}";
-
-        GameObject newChunk = new GameObject(
-            chunkName,
-            new System.Type[] { typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider) }
-        );
-
-        newChunk.transform.position =
-            new Vector3(chunkCoord.x * WorldGenerator.ChunkSize.x, 0f,
-                        chunkCoord.y * WorldGenerator.ChunkSize.z);
-
-        world.State.ActiveChunks.Add(chunkCoord, newChunk);
+        GameObject chunkGO = CreateChunkObject(chunkCoord);
 
         ChunkData data = world.Storage.GetChunk(chunkCoord);
 
         if (data == null)
         {
-            bool done = false;
-
-            world.DataCreator.QueueDataToGenerate(new DataGenerator.GenData
-            {
-                GenerationPoint = chunkCoord,
-                OnComplete = c => { data = c; done = true; }
-            });
-
-            yield return new WaitUntil(() => done);
+            yield return GenerateChunkData(chunkCoord, result => data = result);
         }
 
+        yield return GenerateMesh(data, mesh =>
+        {
+            world.ChunkRenderer.Apply(chunkGO, mesh);
+        });
+    }
+
+    private GameObject CreateChunkObject(Vector2Int coord)
+    {
+        string name = $"Chunk{coord.x}{coord.y}";
+
+        GameObject go = new GameObject(name,
+            new System.Type[] { typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider) });
+
+        go.transform.position = new Vector3(
+            coord.x * WorldGenerator.ChunkSize.x,
+            0f,
+            coord.y * WorldGenerator.ChunkSize.z
+        );
+
+        world.State.ActiveChunks.Add(coord, go);
+
+        return go;
+    }
+
+    private IEnumerator GenerateChunkData(Vector2Int coord, System.Action<ChunkData> callback)
+    {
+        bool done = false;
+        ChunkData result = null;
+
+        world.DataCreator.QueueDataToGenerate(new DataGenerator.GenData
+        {
+            GenerationPoint = coord,
+            OnComplete = c =>
+            {
+                result = c;
+                done = true;
+            }
+        });
+
+        yield return new WaitUntil(() => done);
+
+        callback(result);
+    }
+
+    private IEnumerator GenerateMesh(ChunkData data, System.Action<Mesh> callback)
+    {
+        bool done = false;
         Mesh mesh = null;
 
         world.MeshCreator.QueueDataToDraw(new ChunkMeshCreator.CreateMesh
         {
             DataToDraw = data.Blocks,
-            OnComplete = m => mesh = m
+            OnComplete = m =>
+            {
+                mesh = m;
+                done = true;
+            }
         });
 
-        yield return new WaitUntil(() => mesh != null);
+        yield return new WaitUntil(() => done);
 
-        world.ChunkRenderer.Apply(newChunk, mesh);
+        callback(mesh);
     }
 }
