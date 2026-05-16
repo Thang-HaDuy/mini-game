@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour
 {
+    private ChunkStreamingSystem streamingSystem;
+    [SerializeField] private Transform Player;
+
     private WorldState state;
     private WorldStorage storage;
     private ChunkManager chunkManager;
@@ -41,6 +44,8 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
+        streamingSystem = new ChunkStreamingSystem(this, 2); // RenderDistance hardcode tạm
+
         storage = new WorldStorage();
         state = new WorldState();
         ChunkFactory = new ChunkFactory(this);
@@ -77,6 +82,8 @@ public class WorldGenerator : MonoBehaviour
 
     private void LateUpdate()
     {
+        streamingSystem.Tick(Player.position);
+
         ProcessDirtyChunks();
         chunkManager.ProcessQueue();
     }
