@@ -183,6 +183,23 @@ public class WorldGenerator : MonoBehaviour
         );
 
         UpdateChunk(chunkCoords);
+        ChunkDirtyTracker.MarkDirty(chunkCoords);
+    }
+
+    private void LateUpdate()
+    {
+        ProcessDirtyChunks();
+    }
+
+    private void ProcessDirtyChunks()
+    {
+        if (!ChunkDirtyTracker.HasDirty)
+            return;
+
+        if (ChunkDirtyTracker.TryConsume(out var coord))
+        {
+            UpdateChunk(coord);
+        }
     }
 
     [System.Obsolete]
@@ -217,4 +234,6 @@ public class WorldGenerator : MonoBehaviour
             (chunkCoords.y * ChunkSize.z)
         );
     }
+
+
 }
