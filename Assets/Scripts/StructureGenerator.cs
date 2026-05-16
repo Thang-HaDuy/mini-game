@@ -40,22 +40,7 @@ public class StructureGenerator : MonoBehaviour
                 dataToModify[p.x, p.y, p.z] = info.typeToAssign;
             }
             catch (System.IndexOutOfRangeException) {
-                int worldX = p.x + (originCoords.x * 16);
-                int worldY = p.y;
-                int worldZ = p.z + (originCoords.y * 16);
-                Vector3Int pos = new Vector3Int(worldX, worldY, worldZ);
-
-                Vector2Int newCoords = ChunkCoordUtility.WorldToChunk(pos);
-                Vector3Int chunkCoords = ChunkCoordUtility.WorldToLocal(pos, newCoords);
-
-                if (world.State.AdditiveWorldData.ContainsKey(newCoords)) {
-                    world.State.AdditiveWorldData[newCoords][chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;
-                }
-                else {
-                    int[,,] emptyData = new int[WorldGenerator.ChunkSize.x, WorldGenerator.ChunkSize.y, WorldGenerator.ChunkSize.z];
-                    emptyData[chunkCoords.x, chunkCoords.y, chunkCoords.z] = info.typeToAssign;
-                    world.State.AdditiveWorldData.Add(newCoords, emptyData);
-                }
+                //Debug.LogWarning($"Structure block at {p} is out of range and will not be generated.");
             }
         }
     }

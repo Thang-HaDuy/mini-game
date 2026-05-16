@@ -11,10 +11,10 @@ public class WorldGenerator : MonoBehaviour
 
     private WorldState state;
     private WorldStorage storage;
+    public WorldStorage Storage => storage;
     private ChunkManager chunkManager;
 
     public WorldState State => state;
-    public WorldStorage Storage => storage;
     public ChunkManager ChunkManager => chunkManager;
 
     private ChunkRenderer chunkRenderer;
@@ -43,7 +43,7 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
-        streamingSystem = new ChunkStreamingSystem(this, 4); // RenderDistance hardcode tạm
+        streamingSystem = new ChunkStreamingSystem(this, 2); // RenderDistance hardcode tạm
 
         ChunkPipeline = new ChunkPipeline(this);
 
@@ -84,16 +84,6 @@ public class WorldGenerator : MonoBehaviour
     {
         streamingSystem.Tick(Player.position);
 
-        ProcessDirtyChunks();
         chunkManager.ProcessQueue();
     }
-
-    private void ProcessDirtyChunks()
-    {
-        while (ChunkDirtyTracker.TryConsume(out var coord))
-        {
-            chunkManager.RequestRebuild(coord);
-        }
-    }
-
 }

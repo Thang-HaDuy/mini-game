@@ -84,7 +84,7 @@ public class DataGenerator
             chunkData = new ChunkData(offset);
             tempData = chunkData.Blocks;
         }
- 
+
         Task t = Task.Factory.StartNew(() =>
         {
             for (int x = 0; x < chunkSize.x; x++)

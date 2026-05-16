@@ -1,9 +1,12 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ChunkPipeline
 {
     private readonly WorldGenerator world;
+    private readonly Queue<Vector2Int> queue = new();
+    private bool isRunning;
 
     public ChunkPipeline(WorldGenerator world)
     {
@@ -12,27 +15,27 @@ public class ChunkPipeline
 
     public IEnumerator BuildChunk(Vector2Int coord)
     {
-        // 1. CREATE OR GET DATA
         ChunkData data = world.Storage.GetChunk(coord);
 
         if (data == null)
         {
             yield return world.DataCreator.GenerateData(coord, d => data = d);
+
+            if (data == null)
+                yield break;
+
             world.Storage.AddChunk(data);
         }
 
-        // 2. CREATE GAMEOBJECT IF NOT EXISTS
         if (!world.State.ActiveChunks.TryGetValue(coord, out var go))
         {
             go = CreateChunkObject(coord);
-            world.State.ActiveChunks.Add(coord, go);
+            world.State.ActiveChunks[coord] = go;
         }
 
-        // 3. GENERATE MESH
         Mesh mesh = null;
         yield return world.MeshCreator.CreateMeshFromData(data.Blocks, m => mesh = m);
 
-        // 4. APPLY
         world.ChunkRenderer.Apply(go, mesh);
     }
 

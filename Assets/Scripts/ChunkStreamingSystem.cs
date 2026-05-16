@@ -33,7 +33,6 @@ public class ChunkStreamingSystem
 
                 if (!loaded.Add(coord))
                     continue;
-
                 world.ChunkManager.RequestChunk(coord);
             }
         }
