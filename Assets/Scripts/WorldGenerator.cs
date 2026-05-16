@@ -175,16 +175,13 @@ public class WorldGenerator : MonoBehaviour
     )
     {
         Vector2Int chunkCoords =
-            GetChunkCoordsFromPosition(worldPosition);
+            ChunkCoordUtility.WorldToChunk(worldPosition);
 
         if (!worldStorage.HasChunk(chunkCoords))
             return;
 
         Vector3Int localCoords =
-            WorldToLocalCoords(
-                worldPosition,
-                chunkCoords
-            );
+            ChunkCoordUtility.WorldToLocal(worldPosition, chunkCoords);
 
         ChunkData chunk =
             worldStorage.GetChunk(chunkCoords);
@@ -199,9 +196,10 @@ public class WorldGenerator : MonoBehaviour
         UpdateChunk(chunkCoords);
     }
 
+    [System.Obsolete]
     public Vector2Int GetChunkCoordsFromPosition(
-        Vector3 worldPosition
-    )
+            Vector3 worldPosition
+        )
     {
         return new Vector2Int(
             Mathf.FloorToInt(
@@ -214,10 +212,11 @@ public class WorldGenerator : MonoBehaviour
         );
     }
 
+    [System.Obsolete]
     public Vector3Int WorldToLocalCoords(
-        Vector3Int worldPosition,
-        Vector2Int chunkCoords
-    )
+            Vector3Int worldPosition,
+            Vector2Int chunkCoords
+        )
     {
         return new Vector3Int(
             worldPosition.x -
