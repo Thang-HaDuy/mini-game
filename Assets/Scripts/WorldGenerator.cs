@@ -15,6 +15,8 @@ public class WorldGenerator : MonoBehaviour
     private ChunkRenderer chunkRenderer;
     public ChunkRenderer ChunkRenderer => chunkRenderer;
 
+    public ChunkFactory ChunkFactory { get; private set; }
+
 
     public static readonly Vector3Int ChunkSize =
         new Vector3Int(16, 256, 16);
@@ -33,6 +35,7 @@ public class WorldGenerator : MonoBehaviour
     private ChunkMeshCreator meshCreator;
     public ChunkMeshCreator MeshCreator => meshCreator;
     private DataGenerator dataCreator;
+    public DataGenerator DataCreator => dataCreator;
 
     private int rebuildPerFrame = 1;
 
@@ -40,6 +43,7 @@ public class WorldGenerator : MonoBehaviour
     {
         storage = new WorldStorage();
         state = new WorldState();
+        ChunkFactory = new ChunkFactory(this);
 
         meshCreator = new ChunkMeshCreator(TextureLoaderInstance, this);
         dataCreator = new DataGenerator(this, GetComponent<StructureGenerator>());
@@ -51,59 +55,6 @@ public class WorldGenerator : MonoBehaviour
         chunkManager = new ChunkManager(this, rebuildPerFrame);
     }
 
-    public IEnumerator CreateChunk(Vector2Int chunkCoord)
-    {
-        if (state.ActiveChunks.ContainsKey(chunkCoord))
-            yield break;
-        string chunkName = $"Chunk{chunkCoord.x}{chunkCoord.y}";
-
-        GameObject newChunk =
-            new GameObject(chunkName, new System.Type[]
-            {
-                typeof(MeshRenderer),
-                typeof(MeshFilter),
-                typeof(MeshCollider)
-            });
-
-        newChunk.transform.position =
-            new Vector3(chunkCoord.x * ChunkSize.x, 0f, chunkCoord.y * ChunkSize.z);
-
-        state.ActiveChunks.Add(chunkCoord, newChunk);
-
-        // 1. get data
-        ChunkData dataToApply = storage.GetChunk(chunkCoord);
-
-        if (dataToApply == null)
-        {
-            bool done = false;
-
-            dataCreator.QueueDataToGenerate(new DataGenerator.GenData
-            {
-                GenerationPoint = chunkCoord,
-                OnComplete = c =>
-                {
-                    dataToApply = c;
-                    done = true;
-                }
-            });
-
-            yield return new WaitUntil(() => done);
-        }
-
-        // 2. mesh
-        Mesh mesh = null;
-
-        meshCreator.QueueDataToDraw(new ChunkMeshCreator.CreateMesh
-        {
-            DataToDraw = dataToApply.Blocks,
-            OnComplete = m => mesh = m
-        });
-
-        yield return new WaitUntil(() => mesh != null);
-
-        // 3. apply
-        chunkRenderer.Apply(newChunk, mesh);
-    }
     public void SetBlock(Vector3Int worldPosition, int blockType = 0)
     {
         Vector2Int chunkCoords = ChunkCoordUtility.WorldToChunk(worldPosition);
