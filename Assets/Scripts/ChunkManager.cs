@@ -22,7 +22,7 @@ public class ChunkManager
         if (world.State.ActiveChunks.ContainsKey(coord))
             return;
 
-        world.StartCoroutine(world.ChunkFactory.CreateChunk(coord));
+        world.StartCoroutine(world.ChunkPipeline.BuildChunk(coord));
     }
 
     public void RequestRebuild(Vector2Int coord)

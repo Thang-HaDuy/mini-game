@@ -7,6 +7,8 @@ public class WorldGenerator : MonoBehaviour
     private ChunkStreamingSystem streamingSystem;
     [SerializeField] private Transform Player;
 
+    public ChunkPipeline ChunkPipeline { get; private set; }
+
     private WorldState state;
     private WorldStorage storage;
     private ChunkManager chunkManager;
@@ -17,9 +19,6 @@ public class WorldGenerator : MonoBehaviour
 
     private ChunkRenderer chunkRenderer;
     public ChunkRenderer ChunkRenderer => chunkRenderer;
-
-    public ChunkFactory ChunkFactory { get; private set; }
-
 
     public static readonly Vector3Int ChunkSize =
         new Vector3Int(16, 256, 16);
@@ -44,11 +43,12 @@ public class WorldGenerator : MonoBehaviour
 
     void Start()
     {
-        streamingSystem = new ChunkStreamingSystem(this, 2); // RenderDistance hardcode tạm
+        streamingSystem = new ChunkStreamingSystem(this, 4); // RenderDistance hardcode tạm
+
+        ChunkPipeline = new ChunkPipeline(this);
 
         storage = new WorldStorage();
         state = new WorldState();
-        ChunkFactory = new ChunkFactory(this);
 
         meshCreator = new ChunkMeshCreator(TextureLoaderInstance, this);
         dataCreator = new DataGenerator(this, GetComponent<StructureGenerator>());
