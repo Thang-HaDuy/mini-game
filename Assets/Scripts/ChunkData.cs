@@ -5,14 +5,14 @@ public class ChunkData
     public Vector2Int ChunkCoord;
     public int[,,] Blocks;
 
-    public ChunkData(Vector2Int chunkCoord)
+    public ChunkData(Vector2Int chunkCoord, Vector3Int chunkSize)
     {
         ChunkCoord = chunkCoord;
 
         Blocks = new int[
-            WorldGenerator.ChunkSize.x,
-            WorldGenerator.ChunkSize.y,
-            WorldGenerator.ChunkSize.z
+            chunkSize.x,
+            chunkSize.y,
+            chunkSize.z
         ];
     }
 

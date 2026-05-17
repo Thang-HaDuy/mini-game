@@ -20,29 +20,31 @@ public class WorldGenerator : MonoBehaviour
     void Start()
     {
         Context = new WorldContext();
+        Context.Runtime = gameObject.AddComponent<RuntimeHost>();
 
         Context.Storage = new WorldStorage();
         Context.State = new WorldState();
 
         Context.Renderer = new ChunkRenderer(ChunkMaterial);
 
-        Context.MeshCreator = new ChunkMeshCreator(TextureLoaderInstance, this);
+        Context.MeshCreator = new ChunkMeshCreator(TextureLoaderInstance, Context);
         Context.StructureGenerator = GetComponent<StructureGenerator>();
 
-        Context.DataGenerator = new DataGenerator(this, Context.StructureGenerator);
+        Context.DataGenerator = new DataGenerator(Context, Context.StructureGenerator);
 
-        Context.ChunkPipeline = new ChunkPipeline(this);
-        Context.ChunkManager = new ChunkManager(this);
-        Context.StreamingSystem = new ChunkStreamingSystem(this, 2);
+        Context.ChunkPipeline = new ChunkPipeline(Context);
+        Context.ChunkManager = new ChunkManager(Context);
+        Context.StreamingSystem = new ChunkStreamingSystem(Context, 2);
 
-        Context.StructureGenerator.Init(this);
+        Context.StructureGenerator.Init(Context);
 
         Context.Config = new WorldConfig
         {
             NoiseOffset = NoiseOffset,
             NoiseScale = NoiseScale,
             HeightIntensity = HeightIntensity,
-            HeightOffset = HeightOffset
+            HeightOffset = HeightOffset,
+            ChunkSize = ChunkSize
         };
     }
 
@@ -54,10 +56,10 @@ public class WorldGenerator : MonoBehaviour
 
     public void SetBlock(Vector3Int worldPosition, int blockType)
     {
-        var chunk = ChunkMath.WorldToChunk(worldPosition);
+        var chunk = ChunkMath.WorldToChunk(worldPosition, Context.Config.ChunkSize);
         if (!Context.Storage.HasChunk(chunk)) return;
 
-        var local = ChunkMath.WorldToLocal(worldPosition, chunk);
+        var local = ChunkMath.WorldToLocal(worldPosition, chunk, Context.Config.ChunkSize);
         var data = Context.Storage.GetChunk(chunk);
         if (data == null) return;
 

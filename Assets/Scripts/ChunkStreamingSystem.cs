@@ -9,15 +9,15 @@ public class ChunkStreamingSystem
     private readonly HashSet<Vector2Int> loaded = new();
     private readonly List<Vector2Int> toRemove = new();
 
-    public ChunkStreamingSystem(WorldGenerator world, int renderDistance)
+    public ChunkStreamingSystem(WorldContext world, int renderDistance)
     {
-        this.world = world.Context;
+        this.world = world;
         this.renderDistance = renderDistance;
     }
 
     public void Tick(Vector3 playerPos)
     {
-        Vector2Int center = ChunkMath.WorldToChunk(playerPos);
+        Vector2Int center = ChunkMath.WorldToChunk(playerPos, world.Config.ChunkSize);
 
         UpdateLoad(center);
         UpdateUnload(center);

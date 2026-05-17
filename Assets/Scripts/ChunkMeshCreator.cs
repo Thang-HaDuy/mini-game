@@ -139,16 +139,16 @@ public class ChunkMeshCreator
 
     private Dictionary<Vector3Int, FaceData> CubeFaces = new Dictionary<Vector3Int, FaceData>();
     private TextureLoader TextureLoaderInstance;
-    private WorldGenerator Generator;
+    private readonly WorldContext world;
     private Queue<CreateMesh> MeshesToCreate;
     public bool Terminate;
 
-    public ChunkMeshCreator(TextureLoader textureLoaderInstance, WorldGenerator worldGen)
+    public ChunkMeshCreator(TextureLoader textureLoaderInstance, WorldContext world)
     {
         CubeFaces = new Dictionary<Vector3Int, FaceData>();
         TextureLoaderInstance = textureLoaderInstance;
         MeshesToCreate = new Queue<CreateMesh>();
-        Generator = worldGen;
+        this.world = world;
 
         for (int i = 0; i < CheckDirections.Length; i++)
         {
@@ -167,7 +167,7 @@ public class ChunkMeshCreator
             }
         }
 
-        Generator.StartCoroutine(MeshGenLoop());
+        world.Runtime.RunCoroutine(MeshGenLoop());
     }
 
 
@@ -183,7 +183,7 @@ public class ChunkMeshCreator
             if(MeshesToCreate.Count > 0)
             {
                 CreateMesh createMesh = MeshesToCreate.Dequeue();
-                yield return Generator.StartCoroutine(CreateMeshFromData(createMesh.DataToDraw, createMesh.OnComplete));
+                yield return world.Runtime.RunCoroutine(CreateMeshFromData(createMesh.DataToDraw, createMesh.OnComplete));
             }
 
             yield return null;

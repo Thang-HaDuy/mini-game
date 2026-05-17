@@ -10,7 +10,7 @@ public class StructureGenerator : MonoBehaviour
         public int typeToAssign;
     };
 
-    private WorldGenerator world;
+    private WorldContext world;
 
     [SerializeField] private StructureBlockInfo[] StructureInfo;
 
@@ -22,9 +22,9 @@ public class StructureGenerator : MonoBehaviour
         randomGen = new System.Random(1337);
     }
 
-    public void Init(WorldGenerator worldGenerator)
+    public void Init(WorldContext worldContext)
     {
-        world = worldGenerator;
+        world = worldContext;
     }
 
     private void applyStructure(ref int[,,] dataToModify, Vector2Int originCoords, int x, int y, int z) {
@@ -46,7 +46,7 @@ public class StructureGenerator : MonoBehaviour
     }
 
     private int getTopBlockFromDataXZ(int[,,] data, int x, int z) {
-        for (int y = WorldGenerator.ChunkSize.y - 1; y >= 0; y--) {
+        for (int y = world.Config.ChunkSize.y - 1; y >= 0; y--) {
             if (data[x, y, z] != 0) {
                 return y;
             }

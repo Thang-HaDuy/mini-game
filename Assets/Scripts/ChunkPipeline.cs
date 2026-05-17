@@ -5,12 +5,10 @@ using UnityEngine;
 public class ChunkPipeline
 {
     private WorldContext world;
-    private readonly Queue<Vector2Int> queue = new();
-    private bool isRunning;
 
-    public ChunkPipeline(WorldGenerator world)
+    public ChunkPipeline(WorldContext world)
     {
-        this.world = world.Context;
+        this.world = world;
     }
 
     public IEnumerator BuildChunk(Vector2Int coord)

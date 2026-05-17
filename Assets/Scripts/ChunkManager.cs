@@ -5,17 +5,15 @@ using UnityEngine;
 
 public class ChunkManager
 {
-    private readonly WorldGenerator worldGen;
     private readonly WorldContext world;
 
     private readonly Queue<Vector2Int> rebuildQueue = new();
     private readonly HashSet<Vector2Int> queuedSet = new();
     private readonly int rebuildPerFrame;
 
-    public ChunkManager(WorldGenerator worldGen, int rebuildPerFrame = 1)
+    public ChunkManager(WorldContext worldGen, int rebuildPerFrame = 1)
     {
-        this.worldGen = worldGen;
-        this.world = worldGen.Context;
+        this.world = worldGen;
         this.rebuildPerFrame = rebuildPerFrame;
     }
 
@@ -24,7 +22,7 @@ public class ChunkManager
         if (world.State.ActiveChunks.ContainsKey(coord))
             return;
 
-        worldGen.StartCoroutine(world.ChunkPipeline.BuildChunk(coord));
+        world.Runtime.RunCoroutine(world.ChunkPipeline.BuildChunk(coord));
     }
 
     public void RequestRebuild(Vector2Int coord)
@@ -42,7 +40,7 @@ public class ChunkManager
             var coord = rebuildQueue.Dequeue();
             queuedSet.Remove(coord);
 
-            worldGen.StartCoroutine(RebuildChunkRoutine(coord));
+            world.Runtime.RunCoroutine(RebuildChunkRoutine(coord));
             count--;
         }
     }

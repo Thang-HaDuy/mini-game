@@ -6,4 +6,5 @@ public class WorldConfig
     public Vector2 NoiseScale;
     public float HeightIntensity;
     public float HeightOffset;
+    public Vector3Int ChunkSize;
 }

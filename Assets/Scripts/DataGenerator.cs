@@ -18,21 +18,18 @@ public class DataGenerator
         public System.Action<ChunkData> OnComplete;
         public Vector2Int GenerationPoint;
     }
-
-    private WorldGenerator GeneratorInstance;
-    private WorldContext world;
+    private readonly WorldContext world;
     private Queue<GenData> DataToGenerate;
     public bool Terminate;
 
     private StructureGenerator structureGen;
-    public DataGenerator(WorldGenerator worldGen, StructureGenerator structureGen = null)
+    public DataGenerator(WorldContext world, StructureGenerator structureGen = null)
     {
-        GeneratorInstance = worldGen;
-        world = worldGen.Context;
+        this.world = world;
         DataToGenerate = new Queue<GenData>();
         this.structureGen = structureGen;
 
-        worldGen.StartCoroutine(DataGenLoop());
+        world.Runtime.RunCoroutine(DataGenLoop());
     }
 
     public void QueueDataToGenerate(GenData data)
@@ -47,7 +44,7 @@ public class DataGenerator
             if (DataToGenerate.Count > 0)
             {
                 GenData gen = DataToGenerate.Dequeue();
-                yield return GeneratorInstance.StartCoroutine(GenerateData(gen.GenerationPoint, gen.OnComplete));
+                yield return world.Runtime.RunCoroutine(GenerateData(gen.GenerationPoint, gen.OnComplete));
             }
 
             yield return null;
@@ -59,7 +56,7 @@ public class DataGenerator
     )
     {
         Vector3Int chunkSize =
-            WorldGenerator.ChunkSize;
+            world.Config.ChunkSize;
 
         Vector2 noiseOffset =
             world.Config.NoiseOffset;
@@ -83,7 +80,7 @@ public class DataGenerator
         }
         else
         {
-            chunkData = new ChunkData(offset);
+            chunkData = new ChunkData(offset, chunkSize);
             tempData = chunkData.Blocks;
         }
 
