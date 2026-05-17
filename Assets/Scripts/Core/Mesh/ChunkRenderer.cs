@@ -1,24 +1,27 @@
 using UnityEngine;
 
-public class ChunkRenderer
+namespace MiniGame.Core.Mesh
 {
-    private Material chunkMaterial;
-
-    public ChunkRenderer(Material material)
+    public class ChunkRenderer
     {
-        chunkMaterial = material;
-    }
+        private Material chunkMaterial;
 
-    public void Apply(GameObject chunkObject, Mesh mesh)
-    {
-        if (chunkObject == null || mesh == null) return;
+        public ChunkRenderer(Material material)
+        {
+            chunkMaterial = material;
+        }
 
-        var filter = chunkObject.GetComponent<MeshFilter>();
-        var collider = chunkObject.GetComponent<MeshCollider>();
-        var renderer = chunkObject.GetComponent<MeshRenderer>();
+        public void Apply(GameObject chunkObject, UnityEngine.Mesh mesh)
+        {
+            if (chunkObject == null || mesh == null) return;
 
-        filter.mesh = mesh;
-        collider.sharedMesh = mesh;
-        renderer.material = chunkMaterial;
+            var filter = chunkObject.GetComponent<MeshFilter>();
+            var collider = chunkObject.GetComponent<MeshCollider>();
+            var renderer = chunkObject.GetComponent<MeshRenderer>();
+
+            filter.mesh = mesh;
+            collider.sharedMesh = mesh;
+            renderer.material = chunkMaterial;
+        }
     }
 }

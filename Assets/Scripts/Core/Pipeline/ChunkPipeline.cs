@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using MiniGame.Core.Context;
 using MiniGame.Core.Data;
 using UnityEngine;
@@ -35,7 +34,7 @@ namespace MiniGame.Core.Pipeline
                 world.State.ActiveChunks[coord] = go;
             }
 
-            Mesh mesh = null;
+            UnityEngine.Mesh mesh = null;
             yield return world.MeshCreator.CreateMeshFromData(data.Blocks, m => mesh = m);
 
             world.Renderer.Apply(go, mesh);
@@ -48,10 +47,12 @@ namespace MiniGame.Core.Pipeline
             go.AddComponent<MeshRenderer>();
             go.AddComponent<MeshCollider>();
 
+            Vector3Int chunkSize = world.Config.ChunkSize;
+
             go.transform.position = new Vector3(
-                coord.x * WorldGenerator.ChunkSize.x,
+                coord.x * chunkSize.x,
                 0,
-                coord.y * WorldGenerator.ChunkSize.z
+                coord.y * chunkSize.z
             );
 
             return go;

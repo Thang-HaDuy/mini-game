@@ -2,6 +2,7 @@ using MiniGame.Core.Config;
 using MiniGame.Core.Context;
 using MiniGame.Core.Data;
 using MiniGame.Core.Generation;
+using MiniGame.Core.Mesh;
 using MiniGame.Core.Pipeline;
 using MiniGame.Core.States;
 using MiniGame.Core.Streaming;
@@ -35,7 +36,7 @@ public class WorldGenerator : MonoBehaviour
 
         Context.Renderer = new ChunkRenderer(ChunkMaterial);
 
-        Context.MeshCreator = new ChunkMeshCreator(TextureLoaderInstance, Context);
+        Context.MeshCreator = new ChunkMeshCreator(TextureLoaderInstance);
         Context.StructureGenerator = GetComponent<StructureGenerator>();
 
         Context.DataGenerator = new DataGenerator(Context, Context.StructureGenerator);

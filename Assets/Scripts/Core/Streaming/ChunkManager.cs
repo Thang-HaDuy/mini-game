@@ -58,7 +58,7 @@ namespace MiniGame.Core.Streaming
             if (chunkData == null)
                 yield break;
 
-            Mesh mesh = null;
+            UnityEngine.Mesh mesh = null;
 
             yield return world.MeshCreator.CreateMeshFromData(
                 chunkData.Blocks,

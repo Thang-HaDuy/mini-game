@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using UnityEngine;
 
 namespace MiniGame.Core.Interfaces
 {
@@ -8,7 +7,7 @@ namespace MiniGame.Core.Interfaces
     {
         IEnumerator CreateMeshFromData(
             int[,,] blocks,
-            Action<Mesh> callback
+            Action<UnityEngine.Mesh> callback
         );
     }
 }
