@@ -1,3 +1,11 @@
+using MiniGame.Core.Config;
+using MiniGame.Core.Context;
+using MiniGame.Core.Data;
+using MiniGame.Core.Generation;
+using MiniGame.Core.Pipeline;
+using MiniGame.Core.States;
+using MiniGame.Core.Streaming;
+using MiniGame.Core.Utils;
 using UnityEngine;
 
 public class WorldGenerator : MonoBehaviour

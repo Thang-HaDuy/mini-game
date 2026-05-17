@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MiniGame.Core.Context;
+using MiniGame.Core.Interfaces;
 using UnityEngine;
 
-public class ChunkMeshCreator
+public class ChunkMeshCreator : IMeshBuilder
 {
     public class CreateMesh
     {
