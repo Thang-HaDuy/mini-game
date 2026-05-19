@@ -130,7 +130,6 @@ GameObject:
   - component: {fileID: 137481268}
   - component: {fileID: 137481267}
   - component: {fileID: 137481266}
-  - component: {fileID: 137481265}
   - component: {fileID: 137481264}
   m_Layer: 0
   m_Name: GameMaster
@@ -167,20 +166,6 @@ MonoBehaviour:
   - offsetFromOPoint: {x: 3, y: 5, z: 0}
     typeToAssign: 1
   genThreshold: 0.98
---- !u!114 &137481265
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 137481263}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31c079b63333c59489d7f3d7dd98e975, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InfiniteTerrainGenerator
-  Player: {fileID: 659293228}
-  RenderDistance: 5
 --- !u!114 &137481266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286,12 +271,126 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c70cd885994e2f40bfde1170f95b138, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldGenerator
+  Player: {fileID: 659293228}
   TextureLoaderInstance: {fileID: 137481266}
-  ChunkMaterial: {fileID: 2100000, guid: 7eca88d2119980f45a638a212887852d, type: 2}
+  ChunkMaterial: {fileID: 2100000, guid: c0b245cf02d2e664189e89da2f6d427b, type: 2}
   NoiseScale: {x: 1, y: 1}
   NoiseOffset: {x: 0, y: 0}
-  HeightOffset: 60
   HeightIntensity: 5
+  TemperatureScale: 0.003
+  HumidityScale: 0.003
+  Biomes:
+  - biomeName: Desert
+    tempMin: 0
+    tempMax: 0.33
+    humidityMin: 0
+    humidityMax: 0.33
+    heightMultiplier: 0.3
+    baseElevation: 62
+    topBlock: 3
+    subSurfaceBlock: 3
+    fillBlock: 2
+    baseBlock: 1
+    structures:
+    - structureName: 
+      blocks: []
+      spawnChance: 0
+  - biomeName: Tundra
+    tempMin: 0
+    tempMax: 0.33
+    humidityMin: 0.33
+    humidityMax: 0.67
+    heightMultiplier: 0.4
+    baseElevation: 63
+    topBlock: 3
+    subSurfaceBlock: 2
+    fillBlock: 3
+    baseBlock: 1
+    structures: []
+  - biomeName: Snowy
+    tempMin: 0
+    tempMax: 0.33
+    humidityMin: 0.67
+    humidityMax: 1
+    heightMultiplier: 0.5
+    baseElevation: 64
+    topBlock: 1
+    subSurfaceBlock: 2
+    fillBlock: 3
+    baseBlock: 1
+    structures: []
+  - biomeName: Savanna
+    tempMin: 0.33
+    tempMax: 0.67
+    humidityMin: 0
+    humidityMax: 0.33
+    heightMultiplier: 0.4
+    baseElevation: 64
+    topBlock: 4
+    subSurfaceBlock: 2
+    fillBlock: 3
+    baseBlock: 1
+    structures: []
+  - biomeName: Forest
+    tempMin: 0.33
+    tempMax: 0.67
+    humidityMin: 0.33
+    humidityMax: 0.67
+    heightMultiplier: 0.6
+    baseElevation: 65
+    topBlock: 4
+    subSurfaceBlock: 2
+    fillBlock: 2
+    baseBlock: 1
+    structures: []
+  - biomeName: Taiga
+    tempMin: 0.33
+    tempMax: 0.67
+    humidityMin: 0.67
+    humidityMax: 1
+    heightMultiplier: 0.8
+    baseElevation: 66
+    topBlock: 4
+    subSurfaceBlock: 2
+    fillBlock: 2
+    baseBlock: 1
+    structures: []
+  - biomeName: Jungle
+    tempMin: 0.67
+    tempMax: 1
+    humidityMin: 0
+    humidityMax: 0.33
+    heightMultiplier: 0.7
+    baseElevation: 65
+    topBlock: 4
+    subSurfaceBlock: 2
+    fillBlock: 2
+    baseBlock: 1
+    structures: []
+  - biomeName: Plains
+    tempMin: 0.67
+    tempMax: 1
+    humidityMin: 0.33
+    humidityMax: 0.67
+    heightMultiplier: 0.5
+    baseElevation: 64
+    topBlock: 4
+    subSurfaceBlock: 2
+    fillBlock: 3
+    baseBlock: 1
+    structures: []
+  - biomeName: Swamp
+    tempMin: 0.67
+    tempMax: 1
+    humidityMin: 0.67
+    humidityMax: 1
+    heightMultiplier: 0.2
+    baseElevation: 60
+    topBlock: 2
+    subSurfaceBlock: 2
+    fillBlock: 3
+    baseBlock: 1
+    structures: []
 --- !u!4 &137481268
 Transform:
   m_ObjectHideFlags: 0

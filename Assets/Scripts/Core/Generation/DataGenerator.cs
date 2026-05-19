@@ -1,151 +1,87 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System;
 using System.Collections;
-using UnityEngine;
-using MiniGame.Core.Interfaces;
-using MiniGame.Core.Data;
+using System.Threading.Tasks;
+using MiniGame.Core.Config;
 using MiniGame.Core.Context;
+using MiniGame.Core.Data;
+using MiniGame.Core.Generation.Biomes;
+using MiniGame.Core.Interfaces;
+using UnityEngine;
 
 namespace MiniGame.Core.Generation
 {
     public class DataGenerator : IDataGenerator
     {
-        public struct BiomeData
-        {
-            public int topBlock;
-            public int topMiddleBlock;
-            public int bottomMiddleBlock;
-            public int bottomBlock;
-        }
-
-        public class GenData
-        {
-            public System.Action<ChunkData> OnComplete;
-            public Vector2Int GenerationPoint;
-        }
         private readonly WorldContext world;
-        private Queue<GenData> DataToGenerate;
-        public bool Terminate;
+        private readonly BiomeSelector biomeSelector;
 
-        private StructureGenerator structureGen;
-        public DataGenerator(WorldContext world, StructureGenerator structureGen = null)
+        public DataGenerator(WorldContext world, BiomeSelector biomeSelector)
         {
             this.world = world;
-            DataToGenerate = new Queue<GenData>();
-            this.structureGen = structureGen;
-
-            world.Runtime.RunCoroutine(DataGenLoop());
+            this.biomeSelector = biomeSelector;
         }
 
-        public void QueueDataToGenerate(GenData data)
+        public IEnumerator GenerateData(Vector2Int chunkCoord, Action<ChunkData> callback)
         {
-            DataToGenerate.Enqueue(data);
-        }
+            WorldConfig cfg = world.Config;
 
-        public IEnumerator DataGenLoop()
-        {
-            while (Terminate == false)
+            ChunkData chunkData = world.Storage.GetChunk(chunkCoord)
+                               ?? new ChunkData(chunkCoord, cfg.ChunkSize);
+
+            Task task = Task.Run(() => FillBlocks(chunkData.Blocks, chunkCoord, cfg));
+
+            yield return new WaitUntil(() => task.IsCompleted);
+
+            if (task.Exception != null)
             {
-                if (DataToGenerate.Count > 0)
-                {
-                    GenData gen = DataToGenerate.Dequeue();
-                    yield return world.Runtime.RunCoroutine(GenerateData(gen.GenerationPoint, gen.OnComplete));
-                }
-
-                yield return null;
-            }
-        }
-        public IEnumerator GenerateData(
-            Vector2Int chunkCoord,
-            System.Action<ChunkData> callback
-        )
-        {
-            Vector3Int chunkSize =
-                world.Config.ChunkSize;
-
-            Vector2 noiseOffset =
-                world.Config.NoiseOffset;
-
-            Vector2 noiseScale =
-                world.Config.NoiseScale;
-
-            float heightIntensity =
-                world.Config.HeightIntensity;
-
-            float heightOffset =
-                world.Config.HeightOffset;
-
-            ChunkData chunkData = world.Storage.GetChunk(chunkCoord);
-
-            int[,,] tempData;
-
-            if (chunkData != null)
-            {
-                tempData = chunkData.Blocks;
-            }
-            else
-            {
-                chunkData = new ChunkData(chunkCoord, chunkSize);
-                tempData = chunkData.Blocks;
+                Debug.LogError(task.Exception);
+                yield break;
             }
 
-            Task t = Task.Factory.StartNew(() =>
-    {
-        for (int x = 0; x < chunkSize.x; x++)
-        {
-            for (int z = 0; z < chunkSize.z; z++)
-            {
-                float perlinCoordX = noiseOffset.x + (x + (chunkCoord.x * 16f)) / chunkSize.x * noiseScale.x;
-                float perlinCoordY = noiseOffset.y + (z + (chunkCoord.y * 16f)) / chunkSize.z * noiseScale.y;
-
-                int heightGen = Mathf.RoundToInt(
-                    Mathf.PerlinNoise(perlinCoordX, perlinCoordY) * heightIntensity + heightOffset
-                );
-
-                float biomeNoise = Mathf.PerlinNoise(perlinCoordX * 0.75f, perlinCoordY * 0.75f);
-
-                BiomeData data = biomeNoise < 0.5f
-                    ? new BiomeData { topBlock = 4, topMiddleBlock = 2, bottomMiddleBlock = 3, bottomBlock = 4 }
-                    : new BiomeData { topBlock = 3, topMiddleBlock = 2, bottomMiddleBlock = 3, bottomBlock = 1 };
-
-                for (int y = heightGen; y >= 0; y--)
-                {
-                    int blockType = 0;
-
-                    if (y == heightGen) blockType = data.topBlock;
-                    else if (y > heightGen - 4) blockType = data.topMiddleBlock;
-                    else if (y > 0) blockType = data.bottomMiddleBlock;
-                    else blockType = data.bottomBlock;
-
-                    if (tempData[x, y, z] == 0)
-                        tempData[x, y, z] = blockType;
-                }
-            }
-        }
-    });
-
-            yield return new WaitUntil(() => t.IsCompleted);
-
-            if (t.Exception != null)
-                Debug.LogError(t.Exception);
-
-            // MAIN THREAD ONLY
             world.Storage.AddChunk(chunkData);
-
-            if (structureGen != null)
-            {
-                for (int x = 0; x < chunkSize.x; x++)
-                {
-                    for (int z = 0; z < chunkSize.z; z++)
-                    {
-                        structureGen.GenerateStructure(chunkCoord, ref chunkData.Blocks, x, z);
-                    }
-                }
-            }
-
             callback(chunkData);
         }
 
-    }
+        private void FillBlocks(int[,,] blocks, Vector2Int chunkCoord, WorldConfig cfg)
+        {
+            Vector3Int size = cfg.ChunkSize;
+            var rng = new System.Random(chunkCoord.x * 73856093 ^ chunkCoord.y * 19349663);
 
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int z = 0; z < size.z; z++)
+                {
+                    int worldX = x + chunkCoord.x * size.x;
+                    int worldZ = z + chunkCoord.y * size.z;
+
+                    // Terrain noise
+                    float nx = cfg.NoiseOffset.x + worldX / (float)size.x * cfg.NoiseScale.x;
+                    float nz = cfg.NoiseOffset.y + worldZ / (float)size.z * cfg.NoiseScale.y;
+
+                    // Biome noise — offset khác terrain để tránh tương quan
+                    float temperature = Mathf.PerlinNoise(worldX * cfg.TemperatureScale + 500f,
+                                                          worldZ * cfg.TemperatureScale + 500f);
+                    float humidity    = Mathf.PerlinNoise(worldX * cfg.HumidityScale    + 1000f,
+                                                          worldZ * cfg.HumidityScale    + 1000f);
+
+                    IBiome biome = biomeSelector.Select(temperature, humidity);
+
+                    int surfaceHeight = Mathf.RoundToInt(
+                        Mathf.PerlinNoise(nx, nz) * cfg.HeightIntensity * biome.HeightMultiplier
+                        + biome.BaseElevation
+                    );
+
+                    surfaceHeight = Mathf.Clamp(surfaceHeight, 1, size.y - 1);
+
+                    for (int y = surfaceHeight; y >= 0; y--)
+                        if (blocks[x, y, z] == 0)
+                            blocks[x, y, z] = biome.GetBlockAt(y, surfaceHeight);
+
+                    if (biome.Structures != null)
+                        foreach (var rule in biome.Structures)
+                            rule.TryApply(blocks, x, surfaceHeight, z, rng);
+                }
+            }
+        }
+    }
 }

@@ -7,7 +7,10 @@ namespace MiniGame.Core.Config
         public Vector2 NoiseOffset;
         public Vector2 NoiseScale;
         public float HeightIntensity;
-        public float HeightOffset;
         public Vector3Int ChunkSize;
+
+        // Scales for independent biome noise axes
+        public float TemperatureScale;
+        public float HumidityScale;
     }
 }

@@ -1,6 +1,5 @@
 using MiniGame.Core.Config;
 using MiniGame.Core.Data;
-using MiniGame.Core.Generation;
 using MiniGame.Core.Interfaces;
 using MiniGame.Core.Mesh;
 using MiniGame.Core.Pipeline;
@@ -20,9 +19,7 @@ namespace MiniGame.Core.Context
         public IMeshBuilder MeshCreator;
         public IDataGenerator DataGenerator;
         public ChunkRenderer Renderer;
-        public StructureGenerator StructureGenerator;
         public WorldConfig Config;
-
         public RuntimeHost Runtime;
     }
 }
