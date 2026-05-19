@@ -7,7 +7,7 @@ namespace MiniGame.Core.Pipeline
 {
     public class ChunkPipeline
     {
-        private WorldContext world;
+        private readonly WorldContext world;
 
         public ChunkPipeline(WorldContext world)
         {
@@ -24,8 +24,6 @@ namespace MiniGame.Core.Pipeline
 
                 if (data == null)
                     yield break;
-
-                world.Storage.AddChunk(data);
             }
 
             if (!world.State.ActiveChunks.TryGetValue(coord, out var go))
@@ -34,10 +32,29 @@ namespace MiniGame.Core.Pipeline
                 world.State.ActiveChunks[coord] = go;
             }
 
+            yield return ApplyMesh(coord, data);
+        }
+
+        public IEnumerator RebuildChunk(Vector2Int coord)
+        {
+            if (!world.State.ActiveChunks.ContainsKey(coord))
+                yield break;
+
+            var data = world.Storage.GetChunk(coord);
+            if (data == null)
+                yield break;
+
+            yield return ApplyMesh(coord, data);
+        }
+
+        private IEnumerator ApplyMesh(Vector2Int coord, ChunkData data)
+        {
             UnityEngine.Mesh mesh = null;
+
             yield return world.MeshCreator.CreateMeshFromData(data.Blocks, m => mesh = m);
 
-            world.Renderer.Apply(go, mesh);
+            if (world.State.ActiveChunks.TryGetValue(coord, out var go))
+                world.Renderer.Apply(go, mesh);
         }
 
         private GameObject CreateChunkObject(Vector2Int coord)
@@ -47,13 +64,8 @@ namespace MiniGame.Core.Pipeline
             go.AddComponent<MeshRenderer>();
             go.AddComponent<MeshCollider>();
 
-            Vector3Int chunkSize = world.Config.ChunkSize;
-
-            go.transform.position = new Vector3(
-                coord.x * chunkSize.x,
-                0,
-                coord.y * chunkSize.z
-            );
+            Vector3Int size = world.Config.ChunkSize;
+            go.transform.position = new Vector3(coord.x * size.x, 0, coord.y * size.z);
 
             return go;
         }

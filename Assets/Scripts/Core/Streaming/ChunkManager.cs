@@ -44,37 +44,11 @@ namespace MiniGame.Core.Streaming
                 var coord = rebuildQueue.Dequeue();
                 queuedSet.Remove(coord);
 
-                world.Runtime.RunCoroutine(RebuildChunkRoutine(coord));
+                world.Runtime.RunCoroutine(world.ChunkPipeline.RebuildChunk(coord));
                 count--;
             }
         }
 
-        private IEnumerator RebuildChunkRoutine(Vector2Int chunkCoord)
-        {
-            if (!world.State.ActiveChunks.ContainsKey(chunkCoord))
-                yield break;
-
-            var chunkData = world.Storage.GetChunk(chunkCoord);
-            if (chunkData == null)
-                yield break;
-
-            UnityEngine.Mesh mesh = null;
-
-            yield return world.MeshCreator.CreateMeshFromData(
-                chunkData.Blocks,
-                m => mesh = m
-            );
-
-            if (!world.State.ActiveChunks.TryGetValue(chunkCoord, out var chunkGO))
-                yield break;
-
-            world.Renderer.Apply(chunkGO, mesh);
-        }
-
-        public void RebuildImmediate(Vector2Int coord)
-        {
-            RequestRebuild(coord);
-        }
 
         public void Clear()
         {
