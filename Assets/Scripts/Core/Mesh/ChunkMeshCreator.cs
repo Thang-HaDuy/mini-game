@@ -9,7 +9,6 @@ namespace MiniGame.Core.Mesh
     public class ChunkMeshCreator : IMeshBuilder
     {
         private TextureLoader textureLoader;
-        public bool Terminate;
 
         public ChunkMeshCreator(TextureLoader textureLoaderInstance)
         {
@@ -34,16 +33,14 @@ namespace MiniGame.Core.Mesh
 
         private void GenerateMesh(int[,,] blocks, MeshData meshData)
         {
-            for (int x = 0; x < WorldGenerator.ChunkSize.x; x++)
-            {
-                for (int y = 0; y < WorldGenerator.ChunkSize.y; y++)
-                {
-                    for (int z = 0; z < WorldGenerator.ChunkSize.z; z++)
-                    {
+            int sizeX = blocks.GetLength(0);
+            int sizeY = blocks.GetLength(1);
+            int sizeZ = blocks.GetLength(2);
+
+            for (int x = 0; x < sizeX; x++)
+                for (int y = 0; y < sizeY; y++)
+                    for (int z = 0; z < sizeZ; z++)
                         TryBuildBlock(blocks, meshData, x, y, z);
-                    }
-                }
-            }
         }
 
         private void TryBuildBlock(int[,,] blocks, MeshData meshData, int x, int y, int z)

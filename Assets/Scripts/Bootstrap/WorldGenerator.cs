@@ -313,7 +313,7 @@ public class WorldGenerator : MonoBehaviour
         var data = Context.Storage.GetChunk(chunk);
         if (data == null) return;
 
-        data.SetBlock(local.x, local.y, local.z, blockType);
+        data.Blocks[local.x, local.y, local.z] = blockType;
 
         if (Context.State.ActiveChunks.ContainsKey(chunk))
             Context.ChunkManager.RequestRebuild(chunk);

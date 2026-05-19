@@ -1,0 +1,173 @@
+diff --git a/Assets/Scripts/Bootstrap/WorldGenerator.cs b/Assets/Scripts/Bootstrap/WorldGenerator.cs
+index 05ff4f9..72134c7 100644
+--- a/Assets/Scripts/Bootstrap/WorldGenerator.cs
++++ b/Assets/Scripts/Bootstrap/WorldGenerator.cs
+@@ -313,7 +313,7 @@ public class WorldGenerator : MonoBehaviour
+         var data = Context.Storage.GetChunk(chunk);
+         if (data == null) return;
+ 
+-        data.SetBlock(local.x, local.y, local.z, blockType);
++        data.Blocks[local.x, local.y, local.z] = blockType;
+ 
+         if (Context.State.ActiveChunks.ContainsKey(chunk))
+             Context.ChunkManager.RequestRebuild(chunk);
+diff --git a/Assets/Scripts/Core/Data/ChunkData.cs b/Assets/Scripts/Core/Data/ChunkData.cs
+index 1ac1e74..c97ee82 100644
+--- a/Assets/Scripts/Core/Data/ChunkData.cs
++++ b/Assets/Scripts/Core/Data/ChunkData.cs
+@@ -10,22 +10,7 @@ namespace MiniGame.Core.Data
+         public ChunkData(Vector2Int chunkCoord, Vector3Int chunkSize)
+         {
+             ChunkCoord = chunkCoord;
+-
+-            Blocks = new int[
+-                chunkSize.x,
+-                chunkSize.y,
+-                chunkSize.z
+-            ];
+-        }
+-
+-        public int GetBlock(int x, int y, int z)
+-        {
+-            return Blocks[x, y, z];
+-        }
+-
+-        public void SetBlock(int x, int y, int z, int block)
+-        {
+-            Blocks[x, y, z] = block;
++            Blocks = new int[chunkSize.x, chunkSize.y, chunkSize.z];
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Assets/Scripts/Core/Mesh/ChunkMeshCreator.cs b/Assets/Scripts/Core/Mesh/ChunkMeshCreator.cs
+index 299fd1e..cd2b069 100644
+--- a/Assets/Scripts/Core/Mesh/ChunkMeshCreator.cs
++++ b/Assets/Scripts/Core/Mesh/ChunkMeshCreator.cs
+@@ -9,7 +9,6 @@ namespace MiniGame.Core.Mesh
+     public class ChunkMeshCreator : IMeshBuilder
+     {
+         private TextureLoader textureLoader;
+-        public bool Terminate;
+ 
+         public ChunkMeshCreator(TextureLoader textureLoaderInstance)
+         {
+@@ -34,16 +33,14 @@ namespace MiniGame.Core.Mesh
+ 
+         private void GenerateMesh(int[,,] blocks, MeshData meshData)
+         {
+-            for (int x = 0; x < WorldGenerator.ChunkSize.x; x++)
+-            {
+-                for (int y = 0; y < WorldGenerator.ChunkSize.y; y++)
+-                {
+-                    for (int z = 0; z < WorldGenerator.ChunkSize.z; z++)
+-                    {
++            int sizeX = blocks.GetLength(0);
++            int sizeY = blocks.GetLength(1);
++            int sizeZ = blocks.GetLength(2);
++
++            for (int x = 0; x < sizeX; x++)
++                for (int y = 0; y < sizeY; y++)
++                    for (int z = 0; z < sizeZ; z++)
+                         TryBuildBlock(blocks, meshData, x, y, z);
+-                    }
+-                }
+-            }
+         }
+ 
+         private void TryBuildBlock(int[,,] blocks, MeshData meshData, int x, int y, int z)
+diff --git a/Assets/Scripts/Core/Mesh/ChunkMeshUtility.cs b/Assets/Scripts/Core/Mesh/ChunkMeshUtility.cs
+index 2ea2607..12fe12a 100644
+--- a/Assets/Scripts/Core/Mesh/ChunkMeshUtility.cs
++++ b/Assets/Scripts/Core/Mesh/ChunkMeshUtility.cs
+@@ -2,25 +2,15 @@ namespace MiniGame.Core.Mesh
+ {
+     public static class ChunkMeshUtility
+     {
+-        public static bool IsSolid(
+-            int[,,] blocks,
+-            int x,
+-            int y,
+-            int z)
++        public static bool IsSolid(int[,,] blocks, int x, int y, int z)
+         {
+             if (x < 0 || y < 0 || z < 0)
+                 return false;
+ 
+-            if (x >= WorldGenerator.ChunkSize.x)
+-                return false;
+-
+-            if (y >= WorldGenerator.ChunkSize.y)
+-                return false;
+-
+-            if (z >= WorldGenerator.ChunkSize.z)
++            if (x >= blocks.GetLength(0) || y >= blocks.GetLength(1) || z >= blocks.GetLength(2))
+                 return false;
+ 
+             return blocks[x, y, z] != 0;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Assets/Scripts/Core/Mesh/TextureLoader.cs b/Assets/Scripts/Core/Mesh/TextureLoader.cs
+index 7136479..a9367b4 100644
+--- a/Assets/Scripts/Core/Mesh/TextureLoader.cs
++++ b/Assets/Scripts/Core/Mesh/TextureLoader.cs
+@@ -1,4 +1,3 @@
+-using System.Collections;
+ using System.Collections.Generic;
+ using UnityEngine;
+ 
+@@ -85,25 +84,6 @@ namespace MiniGame.Core.Mesh
+                 return null;
+             }
+ 
+-            public Vector2[] GetUVsAtDirection(Vector3Int Direction)
+-            {
+-                if (Direction == Vector3Int.forward)
+-                    return ZTexture != null ? ZTexture.uv : SpecificFaceTextures.Forward.uv;
+-                else if (Direction == Vector3Int.back)
+-                    return ZTexture != null ? ZTexture.uv : SpecificFaceTextures.Back.uv;
+-
+-                if (Direction == Vector3Int.right)
+-                    return XTexture != null ? XTexture.uv : SpecificFaceTextures.Right.uv;
+-                else if (Direction == Vector3Int.left)
+-                    return XTexture != null ? XTexture.uv : SpecificFaceTextures.Left.uv;
+-
+-                if (Direction == Vector3Int.up)
+-                    return YTexture != null ? YTexture.uv : SpecificFaceTextures.Up.uv;
+-                else if (Direction == Vector3Int.down)
+-                    return YTexture != null ? YTexture.uv : SpecificFaceTextures.Down.uv;
+-
+-                return null;
+-            }
+         }
+ 
+         [SerializeField] private CubeTexture[] CubeTextures;
+diff --git a/Assets/Scripts/Core/Pipeline/ChunkPipeline.cs b/Assets/Scripts/Core/Pipeline/ChunkPipeline.cs
+index e5d76ec..e243434 100644
+--- a/Assets/Scripts/Core/Pipeline/ChunkPipeline.cs
++++ b/Assets/Scripts/Core/Pipeline/ChunkPipeline.cs
+@@ -24,8 +24,6 @@ namespace MiniGame.Core.Pipeline
+ 
+                 if (data == null)
+                     yield break;
+-
+-                world.Storage.AddChunk(data);
+             }
+ 
+             if (!world.State.ActiveChunks.TryGetValue(coord, out var go))
+diff --git a/Assets/Scripts/Core/Streaming/ChunkStreamingSystem.cs b/Assets/Scripts/Core/Streaming/ChunkStreamingSystem.cs
+index 0c51384..66016f1 100644
+--- a/Assets/Scripts/Core/Streaming/ChunkStreamingSystem.cs
++++ b/Assets/Scripts/Core/Streaming/ChunkStreamingSystem.cs
+@@ -59,6 +59,7 @@ namespace MiniGame.Core.Streaming
+             {
+                 var c = toRemove[i];
+                 loaded.Remove(c);
++                world.Storage.RemoveChunk(c);
+ 
+                 if (world.State.ActiveChunks.TryGetValue(c, out var go))
+                 {

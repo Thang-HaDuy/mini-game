@@ -84,26 +84,6 @@ namespace MiniGame.Core.Mesh
                 Debug.Log("Nil");
                 return null;
             }
-
-            public Vector2[] GetUVsAtDirection(Vector3Int Direction)
-            {
-                if (Direction == Vector3Int.forward)
-                    return ZTexture != null ? ZTexture.uv : SpecificFaceTextures.Forward.uv;
-                else if (Direction == Vector3Int.back)
-                    return ZTexture != null ? ZTexture.uv : SpecificFaceTextures.Back.uv;
-
-                if (Direction == Vector3Int.right)
-                    return XTexture != null ? XTexture.uv : SpecificFaceTextures.Right.uv;
-                else if (Direction == Vector3Int.left)
-                    return XTexture != null ? XTexture.uv : SpecificFaceTextures.Left.uv;
-
-                if (Direction == Vector3Int.up)
-                    return YTexture != null ? YTexture.uv : SpecificFaceTextures.Up.uv;
-                else if (Direction == Vector3Int.down)
-                    return YTexture != null ? YTexture.uv : SpecificFaceTextures.Down.uv;
-
-                return null;
-            }
         }
 
         [SerializeField] private CubeTexture[] CubeTextures;

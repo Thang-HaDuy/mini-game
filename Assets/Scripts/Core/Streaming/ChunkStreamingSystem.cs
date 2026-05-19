@@ -63,6 +63,7 @@ namespace MiniGame.Core.Streaming
                 if (world.State.ActiveChunks.TryGetValue(c, out var go))
                 {
                     world.State.ActiveChunks.Remove(c);
+                    world.Storage.RemoveChunk(c);
                     Object.Destroy(go);
                 }
             }
