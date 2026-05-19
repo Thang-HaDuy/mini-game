@@ -1,64 +1,67 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private Transform PlayerCamera;
-    [SerializeField] private float Sensitivity;
-    [SerializeField] private float MovementSpeed;
-    [SerializeField] private float JumpForce;
+    [SerializeField] private float Sensitivity = 0.1f;
+    [SerializeField] private float MovementSpeed = 5f;
+    [SerializeField] private float JumpForce = 5f;
     [SerializeField] private float Gravity = 9.81f;
 
     private CharacterController PlayerController;
     private float GravityForce;
 
-    // Start is called before the first frame update
     void Start()
     {
         PlayerController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        GetInput(out Vector3 MoveInput, out Vector2 MouseInput);
-
-        MovePlayer(MoveInput);
-        MovePlayerCamera(MouseInput);
+        GetInput(out Vector3 moveInput, out Vector2 mouseInput);
+        MovePlayer(moveInput);
+        MovePlayerCamera(mouseInput);
     }
 
-    void GetInput(out Vector3 MoveInput, out Vector2 MouseInput)
+    void GetInput(out Vector3 moveInput, out Vector2 mouseInput)
     {
-        MoveInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
-        MouseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+        var kb = Keyboard.current;
+        var mouse = Mouse.current;
+
+        float h = 0f, v = 0f;
+        if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  h = -1f;
+        if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) h =  1f;
+        if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  v = -1f;
+        if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    v =  1f;
+
+        moveInput = new Vector3(h, 0f, v);
+        mouseInput = mouse.delta.ReadValue();
     }
 
-    void MovePlayer(Vector3 MoveInput)
+    void MovePlayer(Vector3 moveInput)
     {
-        if(PlayerController.isGrounded) 
+        if (PlayerController.isGrounded)
         {
             GravityForce = -2f;
 
-            if(Input.GetKeyDown(KeyCode.Space))
-            {
+            if (Keyboard.current.spaceKey.wasPressedThisFrame)
                 GravityForce = JumpForce;
-            }
-        } 
-        else 
+        }
+        else
         {
-            GravityForce -= Gravity * -2f * Time.deltaTime;
+            GravityForce -= Gravity * Time.deltaTime;  // fix: trước là * -2f → bay ngược lên
         }
 
-        Vector3 moveVector = transform.TransformDirection(MoveInput);
-        PlayerController.Move(moveVector * MovementSpeed * Time.deltaTime);
+        Vector3 moveDir = transform.TransformDirection(moveInput);
+        PlayerController.Move(moveDir * MovementSpeed * Time.deltaTime);
         PlayerController.Move(new Vector3(0f, GravityForce, 0f) * Time.deltaTime);
     }
 
-    void MovePlayerCamera(Vector2 MouseInput)
+    void MovePlayerCamera(Vector2 mouseInput)
     {
-        transform.Rotate(0f, MouseInput.x * Sensitivity, 0f);
-        PlayerCamera.Rotate(-MouseInput.y * Sensitivity, 0f, 0f, Space.Self);
+        transform.Rotate(0f, mouseInput.x * Sensitivity, 0f);
+        PlayerCamera.Rotate(-mouseInput.y * Sensitivity, 0f, 0f, Space.Self);
     }
 }
