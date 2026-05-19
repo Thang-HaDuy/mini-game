@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MiniGame.Core.Mesh
+namespace MiniGame.Core.Rendering
 {
     public static class ChunkMeshBuilder
     {

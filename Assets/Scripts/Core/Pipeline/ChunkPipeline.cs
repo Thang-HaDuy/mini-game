@@ -49,7 +49,7 @@ namespace MiniGame.Core.Pipeline
 
         private IEnumerator ApplyMesh(Vector2Int coord, ChunkData data)
         {
-            UnityEngine.Mesh mesh = null;
+            Mesh mesh = null;
 
             yield return world.MeshCreator.CreateMeshFromData(data.Blocks, m => mesh = m);
 

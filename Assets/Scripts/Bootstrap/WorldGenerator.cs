@@ -3,7 +3,7 @@ using MiniGame.Core.Context;
 using MiniGame.Core.Data;
 using MiniGame.Core.Generation;
 using MiniGame.Core.Generation.Biomes;
-using MiniGame.Core.Mesh;
+using MiniGame.Core.Rendering;
 using MiniGame.Core.Pipeline;
 using MiniGame.Core.States;
 using MiniGame.Core.Streaming;

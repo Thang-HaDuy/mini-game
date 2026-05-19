@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using MiniGame.Core.Interfaces;
 using UnityEngine;
 
-namespace MiniGame.Core.Mesh
+namespace MiniGame.Core.Rendering
 {
     public class ChunkMeshCreator : IMeshBuilder
     {
@@ -17,7 +17,7 @@ namespace MiniGame.Core.Mesh
 
         public IEnumerator CreateMeshFromData(
             int[,,] blocks,
-            Action<UnityEngine.Mesh> callback
+            Action<Mesh> callback
         )
         {
             MeshData meshData = new();
@@ -26,7 +26,7 @@ namespace MiniGame.Core.Mesh
 
             yield return new WaitUntil(() => task.IsCompleted);
 
-            UnityEngine.Mesh mesh = BuildUnityMesh(meshData);
+            Mesh mesh = BuildUnityMesh(meshData);
 
             callback(mesh);
         }
@@ -72,9 +72,9 @@ namespace MiniGame.Core.Mesh
             ChunkMeshBuilder.AddFace(meshData, face, new Vector3(x, y, z), uvs);
         }
 
-        private UnityEngine.Mesh BuildUnityMesh(MeshData meshData)
+        private Mesh BuildUnityMesh(MeshData meshData)
         {
-            UnityEngine.Mesh mesh = new();
+            Mesh mesh = new();
 
             mesh.SetVertices(meshData.Vertices);
             mesh.SetIndices(meshData.Indices, MeshTopology.Triangles, 0);

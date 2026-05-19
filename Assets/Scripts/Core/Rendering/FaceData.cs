@@ -1,7 +1,7 @@
 // Core/Mesh/FaceData.cs
 using UnityEngine;
 
-namespace MiniGame.Core.Mesh
+namespace MiniGame.Core.Rendering
 {
     public class FaceData
     {

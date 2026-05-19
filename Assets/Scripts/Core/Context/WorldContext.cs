@@ -1,7 +1,7 @@
 using MiniGame.Core.Config;
 using MiniGame.Core.Data;
 using MiniGame.Core.Interfaces;
-using MiniGame.Core.Mesh;
+using MiniGame.Core.Rendering;
 using MiniGame.Core.Pipeline;
 using MiniGame.Core.States;
 using MiniGame.Core.Streaming;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MiniGame.Core.Mesh
+namespace MiniGame.Core.Rendering
 {
     public class ChunkRenderer
     {
@@ -11,7 +11,7 @@ namespace MiniGame.Core.Mesh
             chunkMaterial = material;
         }
 
-        public void Apply(GameObject chunkObject, UnityEngine.Mesh mesh)
+        public void Apply(GameObject chunkObject, Mesh mesh)
         {
             if (chunkObject == null || mesh == null) return;
 

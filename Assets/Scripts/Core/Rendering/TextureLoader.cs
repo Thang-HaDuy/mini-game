@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MiniGame.Core.Mesh
+namespace MiniGame.Core.Rendering
 {
     public class TextureLoader : MonoBehaviour
     {
